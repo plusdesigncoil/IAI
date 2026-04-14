@@ -55,10 +55,10 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   display:flex;justify-content:space-between;align-items:flex-start;
   padding:24px 32px 20px;border-bottom:3px solid var(--blue);
 }
-.company-logo{flex-shrink:0;order:1}
+.company-logo{flex-shrink:0;order:2}
 .company-logo svg{height:55px;width:auto}
-.company-info{text-align:left;direction:ltr;line-height:1.7;font-size:12px;color:var(--gray-700);order:2}
-.company-info .company-name{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:2px;direction:rtl;text-align:left}
+.company-info{text-align:right;direction:rtl;line-height:1.7;font-size:12px;color:var(--gray-700);order:1}
+.company-info .company-name{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:2px;direction:rtl;text-align:right}
 .company-info .company-name span{color:var(--gray-400);font-weight:400}
 .company-info .info-row{display:flex;align-items:center;gap:6px;justify-content:flex-start}
 .company-info .info-icon{width:14px;text-align:center;color:var(--blue);font-size:11px}
@@ -85,11 +85,6 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   background:var(--blue-light);padding:3px 10px;border-radius:20px;
   font-size:12px;font-weight:600;color:var(--blue-dark);
 }
-.user-badge .logout-link{
-  color:var(--gray-400);cursor:pointer;font-size:14px;margin-right:4px;
-  transition:color .15s;
-}
-.user-badge .logout-link:hover{color:var(--red)}
 
 /* Actions Bar */
 .actions-bar{
@@ -293,7 +288,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
       </div>
       <div class="meta-row">
         <span class="meta-label"><span class="required-star">*</span>כותרת</span>
-        <div class="meta-value"><input id="metaTitle" placeholder="תיאור הפרויקט (חובה)"></div>
+        <div class="meta-value"><input id="metaTitle" placeholder="תיאור הפרויקט (חובה)" oninput="saveQuote()"></div>
       </div>
       <div class="meta-row">
         <span class="meta-label">עוסק מורשה</span>
@@ -301,14 +296,13 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
       </div>
       <div class="meta-row">
         <span class="meta-label">מספר הצעה</span>
-        <div class="meta-value"><input id="metaQuoteNum" placeholder="מספר"></div>
+        <div class="meta-value"><input id="metaQuoteNum" placeholder="מספר" oninput="saveQuote()"></div>
       </div>
       <div class="meta-row">
         <span class="meta-label">לידיי</span>
         <div class="meta-value">
           <span class="user-badge" id="userBadge">
             <span id="userName">—</span>
-            <span class="logout-link no-print" onclick="logout()" title="התנתק">✕</span>
           </span>
         </div>
       </div>
@@ -318,7 +312,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
       </div>
       <div class="meta-row" style="grid-column:1/-1">
         <span class="meta-label">תאריך</span>
-        <div class="meta-value" style="max-width:180px"><input id="metaDate" type="date"></div>
+        <div class="meta-value" style="max-width:180px"><input id="metaDate" type="date" onchange="saveQuote()"></div>
       </div>
     </div>
 
@@ -329,6 +323,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
       <span class="spacer"></span>
       <button class="btn btn-outline" onclick="doPrint()">🖨️ הדפס</button>
       <button class="btn btn-red btn-sm" onclick="clearAll()">🗑️ נקה</button>
+      <button class="btn btn-outline btn-sm" onclick="logout()" title="התנתק">🚪 התנתק</button>
     </div>
 
     <!-- Items Table -->
@@ -429,26 +424,84 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 
 <script>
 // ═══════ USERS ═══════
+// Phone numbers are stored as SHA-256 hashes (one-way) so raw numbers
+// are never exposed in the source code.
 const USERS = {
-  '0525326977': 'ענת תובל',
-  '0527907910': 'אביעד מעודד',
-  '0532266612': 'אור פרנדר',
+  '59dc77e0b06b63c70d52470a6a6e4e0d403e66e5876fa77dc48492571da47395': 'ענת תובל',
+  '9651fe593aca8afd1edfebcbaaf6a04628c9dc829da70879424f691013b5450b': 'אביעד מעודד',
+  '29ed0e24ff422c9a779a3045989818487510b579fdb1f153ef74e18999514abe': 'אור פרנדר',
 };
 
 let currentUser = null;
+
+// ═══════ STORAGE ═══════
+const STORAGE_SESSION = 'iai_session';
+const storageQuoteKey = name => 'iai_quote_' + name;
+
+function saveQuote() {
+  if (!currentUser) return;
+  const data = {
+    rows: quoteRows,
+    title: document.getElementById('metaTitle').value,
+    quoteNum: document.getElementById('metaQuoteNum').value,
+    date: document.getElementById('metaDate').value,
+    discount: document.getElementById('discountInput').value,
+  };
+  try { localStorage.setItem(storageQuoteKey(currentUser.name), JSON.stringify(data)); } catch(e) {}
+}
+
+function loadQuote() {
+  if (!currentUser) return;
+  try {
+    const raw = localStorage.getItem(storageQuoteKey(currentUser.name));
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    quoteRows = Array.isArray(data.rows) ? data.rows : [];
+    document.getElementById('metaTitle').value = data.title || '';
+    document.getElementById('metaQuoteNum').value = data.quoteNum || '';
+    if (data.date) document.getElementById('metaDate').value = data.date;
+    document.getElementById('discountInput').value = data.discount || 0;
+  } catch(e) {}
+}
+
+function saveSession() {
+  if (!currentUser) return;
+  try { localStorage.setItem(STORAGE_SESSION, JSON.stringify({ name: currentUser.name })); } catch(e) {}
+}
+
+function clearSession() {
+  try { localStorage.removeItem(STORAGE_SESSION); } catch(e) {}
+}
 
 function normalizePhone(raw) {
   return raw.replace(/[\s\-\(\)]/g, '');
 }
 
-function tryLogin() {
+async function hashPhone(phone) {
+  const data = new TextEncoder().encode(phone);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function enterApp(name) {
+  currentUser = { name };
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('userName').textContent = name;
+  document.getElementById('metaDate').valueAsDate = new Date();
+  loadQuote();
+  renderTable();
+}
+
+async function tryLogin() {
   const input = document.getElementById('loginPhone');
   const errEl = document.getElementById('loginError');
   const phone = normalizePhone(input.value);
 
   if (!phone) { errEl.textContent = 'הזן מספר טלפון'; input.classList.add('error'); setTimeout(()=>input.classList.remove('error'),400); return; }
 
-  const name = USERS[phone];
+  const hashed = await hashPhone(phone);
+  const name = USERS[hashed];
   if (!name) {
     errEl.textContent = 'מספר טלפון לא מורשה';
     input.classList.add('error');
@@ -456,15 +509,26 @@ function tryLogin() {
     return;
   }
 
-  currentUser = { phone, name };
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display = 'block';
-  document.getElementById('userName').textContent = name;
-  document.getElementById('metaDate').valueAsDate = new Date();
+  enterApp(name);
+  saveSession();
+}
+
+function restoreSession() {
+  try {
+    const raw = localStorage.getItem(STORAGE_SESSION);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s || !s.name) return false;
+    // Only restore if the stored name matches an authorized user
+    const authorized = Object.values(USERS).includes(s.name);
+    if (!authorized) { clearSession(); return false; }
+    enterApp(s.name);
+    return true;
+  } catch(e) { return false; }
 }
 
 function logout() {
-  if (quoteRows.length && !confirm('להתנתק? הנתונים לא יישמרו')) return;
+  clearSession();
   currentUser = null;
   quoteRows = [];
   renderTable();
@@ -608,11 +672,12 @@ function recalcSummary() {
   document.getElementById('beforeVatVal').textContent = '₪'+fmt(afterDisc);
   document.getElementById('vatVal').textContent = '₪'+fmt(vat);
   document.getElementById('grandTotalVal').textContent = '₪'+fmt(grand);
+  saveQuote();
 }
 
-function deleteRow(idx) { quoteRows.splice(idx,1); renderTable(); }
-function duplicateLastRow() { if(!quoteRows.length)return; quoteRows.push({...quoteRows[quoteRows.length-1]}); renderTable(); }
-function clearAll() { if(quoteRows.length&&!confirm('לנקות את כל השורות?'))return; quoteRows=[]; renderTable(); }
+function deleteRow(idx) { quoteRows.splice(idx,1); renderTable(); saveQuote(); }
+function duplicateLastRow() { if(!quoteRows.length)return; quoteRows.push({...quoteRows[quoteRows.length-1]}); renderTable(); saveQuote(); }
+function clearAll() { if(quoteRows.length&&!confirm('לנקות את כל השורות?'))return; quoteRows=[]; renderTable(); saveQuote(); }
 
 function doPrint() {
   const titleInput = document.getElementById('metaTitle');
@@ -714,6 +779,7 @@ function confirmAddProduct() {
   });
   closeDetailModal();
   renderTable();
+  saveQuote();
 }
 
 document.addEventListener('keydown',e=>{
@@ -724,7 +790,8 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-renderTable();
+// Restore session from localStorage if present, otherwise show login screen
+if (!restoreSession()) renderTable();
 </script>
 </body>
 </html>
