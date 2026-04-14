@@ -1,0 +1,730 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הצעת מחיר — פלוס דיזיין</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:#4482c4; --blue-dark:#2d5f8a; --blue-light:#e8f0f8;
+  --ink:#1a1a2e; --gray-50:#fafbfc; --gray-100:#f1f3f5;
+  --gray-200:#e2e6ea; --gray-300:#ced4da; --gray-400:#adb5bd;
+  --gray-500:#868e96; --gray-700:#495057;
+  --green:#27ae60; --green-bg:#eafaf1; --red:#e74c3c; --white:#fff;
+  --radius:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);direction:rtl;font-size:13px;min-height:100vh}
+
+/* ══ LOGIN SCREEN ══ */
+.login-overlay{
+  position:fixed;inset:0;background:linear-gradient(135deg,#0d1b2a 0%,#1b3a5c 60%,#2d5f8a 100%);
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+}
+.login-card{
+  background:var(--white);border-radius:16px;padding:48px 40px;width:90%;max-width:380px;
+  box-shadow:0 24px 64px rgba(0,0,0,.3);text-align:center;
+}
+.login-card svg{height:50px;margin-bottom:24px}
+.login-card h2{font-size:18px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.login-card p{font-size:13px;color:var(--gray-500);margin-bottom:24px}
+.login-input{
+  width:100%;padding:12px 16px;border:2px solid var(--gray-200);border-radius:10px;
+  font-family:inherit;font-size:16px;text-align:center;direction:ltr;
+  letter-spacing:1px;transition:border-color .2s;
+}
+.login-input:focus{outline:none;border-color:var(--blue)}
+.login-input.error{border-color:var(--red);animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.login-btn{
+  width:100%;padding:12px;margin-top:14px;border:none;border-radius:10px;
+  background:var(--blue);color:#fff;font-family:inherit;font-size:15px;
+  font-weight:700;cursor:pointer;transition:background .15s;
+}
+.login-btn:hover{background:var(--blue-dark)}
+.login-error{color:var(--red);font-size:12px;margin-top:10px;min-height:18px}
+
+/* ══ MAIN APP ══ */
+.page-wrap{max-width:900px;margin:20px auto;padding:0 16px;display:none}
+.quote-doc{background:var(--white);border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden}
+
+/* Company Header — LTR aligned (left side) */
+.company-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:24px 32px 20px;border-bottom:3px solid var(--blue);
+}
+.company-logo{flex-shrink:0;order:1}
+.company-logo svg{height:55px;width:auto}
+.company-info{text-align:left;direction:ltr;line-height:1.7;font-size:12px;color:var(--gray-700);order:2}
+.company-info .company-name{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:2px;direction:rtl;text-align:left}
+.company-info .company-name span{color:var(--gray-400);font-weight:400}
+.company-info .info-row{display:flex;align-items:center;gap:6px;justify-content:flex-start}
+.company-info .info-icon{width:14px;text-align:center;color:var(--blue);font-size:11px}
+
+/* Quote Meta */
+.quote-meta{padding:20px 32px;display:grid;grid-template-columns:1fr 1fr;gap:12px 40px;border-bottom:1px solid var(--gray-200)}
+.meta-row{display:flex;align-items:center;gap:8px}
+.meta-label{font-weight:700;font-size:12px;color:var(--gray-500);min-width:80px;white-space:nowrap}
+.meta-label::after{content:':'}
+.meta-value{flex:1}
+.meta-value input{
+  width:100%;border:none;border-bottom:1.5px solid var(--gray-200);
+  padding:4px 2px;font-family:inherit;font-size:13px;font-weight:500;
+  background:transparent;transition:border-color .2s;
+}
+.meta-value input:focus{outline:none;border-color:var(--blue)}
+.meta-value input::placeholder{color:var(--gray-400);font-weight:400}
+.meta-value input.locked{color:var(--ink);border-bottom-color:transparent;pointer-events:none;font-weight:600}
+.meta-value input.required-empty{border-bottom-color:var(--red)}
+.required-star{color:var(--red);font-weight:700;margin-right:2px}
+
+.user-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--blue-light);padding:3px 10px;border-radius:20px;
+  font-size:12px;font-weight:600;color:var(--blue-dark);
+}
+.user-badge .logout-link{
+  color:var(--gray-400);cursor:pointer;font-size:14px;margin-right:4px;
+  transition:color .15s;
+}
+.user-badge .logout-link:hover{color:var(--red)}
+
+/* Actions Bar */
+.actions-bar{
+  padding:16px 32px;display:flex;gap:10px;align-items:center;
+  border-bottom:1px solid var(--gray-200);background:var(--gray-50);
+}
+.btn{
+  padding:8px 16px;border:none;border-radius:var(--radius);
+  font-family:inherit;font-size:12.5px;font-weight:600;
+  cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;
+}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:var(--blue-dark)}
+.btn-outline{background:transparent;border:1.5px solid var(--gray-300);color:var(--gray-700)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+.btn-red{background:transparent;border:1.5px solid var(--red);color:var(--red)}
+.btn-red:hover{background:var(--red);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#219a52}
+.btn-sm{padding:5px 10px;font-size:11px}
+.spacer{flex:1}
+
+/* Items Table */
+.items-section{padding:0}
+.items-table{width:100%;border-collapse:collapse}
+.items-table thead th{
+  background:var(--blue-light);padding:9px 10px;font-size:11.5px;
+  font-weight:700;color:var(--blue-dark);text-align:right;
+  border-bottom:2px solid var(--blue);white-space:nowrap;
+}
+.items-table thead th.num{text-align:center}
+.items-table tbody td{padding:7px 10px;font-size:12.5px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+.items-table tbody tr:hover td{background:var(--gray-50)}
+.items-table tbody tr:nth-child(even) td{background:var(--gray-50)}
+.items-table tbody tr:nth-child(even):hover td{background:var(--gray-100)}
+.items-table .row-num{text-align:center;color:var(--gray-400);font-weight:600;width:30px}
+.items-table .item-name{font-weight:500;max-width:200px}
+.items-table .contract-badge{
+  display:inline-block;background:var(--blue-light);color:var(--blue-dark);
+  font-weight:700;font-size:11px;padding:1px 7px;border-radius:3px;
+  text-align:center;min-width:28px;
+}
+.items-table .num-cell{text-align:center}
+.items-table .money{font-weight:600;white-space:nowrap}
+.items-table .total-cell{font-weight:700;color:var(--green)}
+.items-table .notes-cell{font-size:11.5px;color:var(--gray-500);max-width:100px}
+.items-table .del-btn{
+  background:none;border:none;color:var(--gray-400);cursor:pointer;
+  font-size:15px;padding:2px;border-radius:3px;transition:all .15s;
+}
+.items-table .del-btn:hover{color:var(--red);background:#fdecea}
+.empty-table{text-align:center;padding:40px 20px;color:var(--gray-400)}
+.empty-table .empty-icon{font-size:36px;margin-bottom:8px}
+
+/* Summary */
+.summary-section{
+  border-top:2px solid var(--gray-200);padding:20px 32px;
+  display:flex;justify-content:flex-start;gap:40px;
+}
+.summary-box{min-width:260px}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px}
+.summary-row .s-label{color:var(--gray-500);font-weight:500}
+.summary-row .s-value{font-weight:600;font-size:14px}
+.summary-row.discount .s-value{color:var(--red)}
+.summary-divider{border:none;border-top:2px solid var(--ink);margin:8px 0}
+.summary-row.grand{font-size:16px;font-weight:800;padding:8px 0 0}
+.summary-row.grand .s-value{color:var(--blue-dark)}
+.discount-inline{display:inline-flex;align-items:center;gap:4px}
+.discount-inline input{
+  width:55px;padding:3px 6px;border:1.5px solid var(--gray-200);
+  border-radius:4px;font-family:inherit;font-size:13px;text-align:center;
+}
+.discount-inline input:focus{outline:none;border-color:var(--blue)}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;backdrop-filter:blur(2px);
+}
+.modal{
+  background:var(--white);border-radius:10px;width:94%;max-width:600px;
+  max-height:85vh;box-shadow:0 16px 48px rgba(0,0,0,.2);display:flex;flex-direction:column;
+}
+.modal-header{padding:16px 24px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-400);padding:4px;border-radius:4px}
+.modal-close:hover{color:var(--ink);background:var(--gray-100)}
+.modal-body{padding:16px 24px;overflow-y:auto;flex:1}
+.modal-search{
+  width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);
+  border-radius:var(--radius);font-family:inherit;font-size:13px;margin-bottom:12px;
+}
+.modal-search:focus{outline:none;border-color:var(--blue)}
+.product-list{list-style:none}
+.product-category{font-size:12px;font-weight:700;color:var(--blue-dark);padding:8px 0 4px;border-bottom:1px solid var(--gray-200);margin-top:8px}
+.product-category:first-child{margin-top:0}
+.product-item{
+  padding:8px 10px;cursor:pointer;border-radius:var(--radius);
+  display:flex;justify-content:space-between;align-items:center;
+  transition:background .1s;font-size:12.5px;
+}
+.product-item:hover{background:var(--blue-light)}
+.product-item .p-name{font-weight:500;flex:1}
+.product-item .p-meta{display:flex;gap:12px;align-items:center;color:var(--gray-500);font-size:11.5px}
+.product-item .p-price{font-weight:700;color:var(--blue-dark)}
+.product-item .p-contract{background:var(--blue-light);color:var(--blue-dark);padding:1px 6px;border-radius:3px;font-size:10.5px;font-weight:700}
+
+/* Detail Modal */
+.detail-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.detail-group{display:flex;flex-direction:column;gap:3px}
+.detail-group.full{grid-column:1/-1}
+.detail-group label{font-size:11.5px;font-weight:600;color:var(--gray-500)}
+.detail-group input,.detail-group textarea{padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:var(--radius);font-family:inherit;font-size:13px}
+.detail-group input:focus,.detail-group textarea:focus{outline:none;border-color:var(--blue)}
+.detail-group .readonly{background:var(--gray-50);color:var(--gray-500)}
+.detail-preview{
+  grid-column:1/-1;background:var(--green-bg);border-radius:var(--radius);
+  padding:12px 16px;margin-top:4px;display:flex;justify-content:space-between;font-size:13px;
+}
+.detail-preview .dp-label{color:var(--gray-500)}
+.detail-preview .dp-value{font-weight:700;color:var(--green);font-size:15px}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-start;gap:10px}
+
+@media print{
+  body{background:#fff}
+  .page-wrap{margin:0;padding:0;max-width:100%}
+  .quote-doc{box-shadow:none;border-radius:0}
+  .actions-bar,.no-print,.del-btn,.login-overlay{display:none!important}
+  .page-wrap{display:block!important}
+  .items-table thead th,.company-header,.items-table tbody tr:nth-child(even) td,
+  .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .discount-inline input{border:none;font-weight:700}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOGIN SCREEN ══════ -->
+<div class="login-overlay" id="loginScreen">
+  <div class="login-card">
+    <svg viewBox="0 0 965.2 210.2" xmlns="http://www.w3.org/2000/svg">
+      <style>.st0{fill:#010101}.st1{fill:#4482c4}</style>
+      <g><path class="st1" d="M206.32,28.18h-50.67v25.06h50.67c28.6,0,51.86,23.27,51.86,51.86s-23.27,51.86-51.86,51.86h-50.67v25.06h50.67c42.42,0,76.92-34.51,76.92-76.92S248.74,28.18,206.32,28.18"/><polygon class="st1" points="155.65 143.89 180.72 143.89 180.72 117.64 206.96 117.64 206.96 92.57 180.72 92.57 180.72 66.32 155.65 66.32 155.65 92.57 129.4 92.57 129.4 117.64 155.65 117.64 155.65 143.89"/></g>
+      <polygon class="st0" points="492.59 78.89 528.38 78.89 528.38 142.48 543.06 142.48 543.06 78.89 555.67 78.89 555.67 66.62 492.59 66.62 492.59 78.89"/>
+      <polygon class="st0" points="413.7 78.89 427.79 78.89 433.24 142.48 447.91 142.48 442.47 78.89 455.09 78.89 455.09 66.62 413.7 66.62 413.7 78.89"/>
+      <path class="st0" d="M636.39,66.62h-45.65v12.28h5.13l.09,30.93c0,20.38,13.13,34.13,32.96,34.13h.9c18.93,0,32.44-13.99,32.44-34.13v-14.24c0-16.33-7.6-28.97-25.88-28.97ZM647.46,110.56c0,14.48-7.85,20.99-17.77,20.99h-.77c-10.3,0-18.28-6.51-18.28-21.61l-.13-31.06h22.27c10.17,0,14.68,6.02,14.68,16.45v15.22Z"/>
+      <polygon class="st0" points="714.92 48.08 700.11 48.08 700.11 78.89 741.44 78.89 720.07 142.48 735.51 142.48 760.88 66.62 714.92 66.62 714.92 48.08"/>
+      <path class="st0" d="M808.3,66.62h-37.64v45.05h25.49v-11.91h-11.33v-20.87h21.94c14.03,0,14.37,9.94,14.37,24.67v.86c0,14.85-.34,25.78-14.37,25.78h-35.84v12.28h37.39c20.47,0,27.5-15.83,27.5-37.81v-1.1c0-21.97-5.74-36.95-27.5-36.95Z"/>
+      <polygon class="st0" points="669.53 66.62 669.53 78.89 674.62 78.89 674.62 142.48 689.3 142.48 689.3 66.62 674.62 66.62 669.53 66.62"/>
+      <polygon class="st0" points="462.91 66.62 462.91 78.89 468 78.89 468 108.6 482.68 108.6 482.68 66.62 468 66.62 462.91 66.62"/>
+      <polygon class="st0" points="386.1 66.62 386.1 78.89 391.2 78.89 391.2 108.6 405.87 108.6 405.87 66.62 391.2 66.62 386.1 66.62"/>
+      <polygon class="st0" points="358.68 66.62 358.68 78.89 363.78 78.89 363.78 108.6 378.45 108.6 378.45 66.62 363.78 66.62 358.68 66.62"/>
+      <polygon class="st0" points="330.1 66.62 330.1 78.89 335.2 78.89 335.2 162.61 350.39 162.61 350.39 66.62 335.2 66.62 330.1 66.62"/>
+    </svg>
+    <h2>מערכת הצעות מחיר</h2>
+    <p>הזן מספר טלפון להתחברות</p>
+    <input class="login-input" id="loginPhone" type="tel" placeholder="05X-XXX-XXXX" maxlength="12" autofocus>
+    <button class="login-btn" onclick="tryLogin()">כניסה</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ══════ MAIN APP ══════ -->
+<div class="page-wrap" id="mainApp">
+  <div class="quote-doc">
+
+    <!-- Company Header — info aligned LEFT -->
+    <div class="company-header">
+      <div class="company-logo">
+        <svg viewBox="0 0 965.2 210.2" xmlns="http://www.w3.org/2000/svg">
+          <style>.st0{fill:#010101}.st1{fill:#4482c4}</style>
+          <g><path class="st1" d="M206.32,28.18h-50.67v25.06h50.67c28.6,0,51.86,23.27,51.86,51.86s-23.27,51.86-51.86,51.86h-50.67v25.06h50.67c42.42,0,76.92-34.51,76.92-76.92S248.74,28.18,206.32,28.18"/><polygon class="st1" points="155.65 143.89 180.72 143.89 180.72 117.64 206.96 117.64 206.96 92.57 180.72 92.57 180.72 66.32 155.65 66.32 155.65 92.57 129.4 92.57 129.4 117.64 155.65 117.64 155.65 143.89"/></g>
+          <polygon class="st0" points="492.59 78.89 528.38 78.89 528.38 142.48 543.06 142.48 543.06 78.89 555.67 78.89 555.67 66.62 492.59 66.62 492.59 78.89"/>
+          <polygon class="st0" points="413.7 78.89 427.79 78.89 433.24 142.48 447.91 142.48 442.47 78.89 455.09 78.89 455.09 66.62 413.7 66.62 413.7 78.89"/>
+          <path class="st0" d="M636.39,66.62h-45.65v12.28h5.13l.09,30.93c0,20.38,13.13,34.13,32.96,34.13h.9c18.93,0,32.44-13.99,32.44-34.13v-14.24c0-16.33-7.6-28.97-25.88-28.97ZM647.46,110.56c0,14.48-7.85,20.99-17.77,20.99h-.77c-10.3,0-18.28-6.51-18.28-21.61l-.13-31.06h22.27c10.17,0,14.68,6.02,14.68,16.45v15.22Z"/>
+          <polygon class="st0" points="714.92 48.08 700.11 48.08 700.11 78.89 741.44 78.89 720.07 142.48 735.51 142.48 760.88 66.62 714.92 66.62 714.92 48.08"/>
+          <path class="st0" d="M808.3,66.62h-37.64v45.05h25.49v-11.91h-11.33v-20.87h21.94c14.03,0,14.37,9.94,14.37,24.67v.86c0,14.85-.34,25.78-14.37,25.78h-35.84v12.28h37.39c20.47,0,27.5-15.83,27.5-37.81v-1.1c0-21.97-5.74-36.95-27.5-36.95Z"/>
+          <polygon class="st0" points="669.53 66.62 669.53 78.89 674.62 78.89 674.62 142.48 689.3 142.48 689.3 66.62 674.62 66.62 669.53 66.62"/>
+          <polygon class="st0" points="462.91 66.62 462.91 78.89 468 78.89 468 108.6 482.68 108.6 482.68 66.62 468 66.62 462.91 66.62"/>
+          <polygon class="st0" points="386.1 66.62 386.1 78.89 391.2 78.89 391.2 108.6 405.87 108.6 405.87 66.62 391.2 66.62 386.1 66.62"/>
+          <polygon class="st0" points="358.68 66.62 358.68 78.89 363.78 78.89 363.78 108.6 378.45 108.6 378.45 66.62 363.78 66.62 358.68 66.62"/>
+          <polygon class="st0" points="330.1 66.62 330.1 78.89 335.2 78.89 335.2 162.61 350.39 162.61 350.39 66.62 335.2 66.62 330.1 66.62"/>
+        </svg>
+      </div>
+      <div class="company-info">
+        <div class="company-name">א.ג סטודיו פלוס דיזיין בע"מ <span>| ח.פ 515196079</span></div>
+        <div class="info-row"><span class="info-icon">🏠</span> <span>אברהם בומה שביט 1, ראשון לציון, יחידה D201</span></div>
+        <div class="info-row"><span class="info-icon">📞</span> <span>03-528-5003</span></div>
+        <div class="info-row"><span class="info-icon">💬</span> <span>054-558-7997</span></div>
+        <div class="info-row"><span class="info-icon">✉</span> <span>info@plusdesign.co.il</span></div>
+        <div class="info-row"><span class="info-icon">🌐</span> <span>www.plusdesign.co.il</span></div>
+      </div>
+    </div>
+
+    <!-- Quote Meta -->
+    <div class="quote-meta">
+      <div class="meta-row">
+        <span class="meta-label">לכבוד</span>
+        <div class="meta-value"><input value="תעשייה אווירית IAI" class="locked" readonly></div>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label"><span class="required-star">*</span>כותרת</span>
+        <div class="meta-value"><input id="metaTitle" placeholder="תיאור הפרויקט (חובה)"></div>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">עוסק מורשה</span>
+        <div class="meta-value"><input value="520027194" class="locked" readonly></div>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">מספר הצעה</span>
+        <div class="meta-value"><input id="metaQuoteNum" placeholder="מספר"></div>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">לידיי</span>
+        <div class="meta-value">
+          <span class="user-badge" id="userBadge">
+            <span id="userName">—</span>
+            <span class="logout-link no-print" onclick="logout()" title="התנתק">✕</span>
+          </span>
+        </div>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">קוד ספק</span>
+        <div class="meta-value"><input value="IW056" class="locked" readonly></div>
+      </div>
+      <div class="meta-row" style="grid-column:1/-1">
+        <span class="meta-label">תאריך</span>
+        <div class="meta-value" style="max-width:180px"><input id="metaDate" type="date"></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-bar no-print">
+      <button class="btn btn-blue" onclick="openProductPicker()">➕ הוסף מוצר</button>
+      <button class="btn btn-outline" onclick="duplicateLastRow()">📋 שכפל שורה אחרונה</button>
+      <span class="spacer"></span>
+      <button class="btn btn-outline" onclick="doPrint()">🖨️ הדפס</button>
+      <button class="btn btn-red btn-sm" onclick="clearAll()">🗑️ נקה</button>
+    </div>
+
+    <!-- Items Table -->
+    <div class="items-section">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th class="num" style="width:30px">#</th>
+            <th>פרטים</th>
+            <th class="num" style="width:65px">סעיף בחוזה</th>
+            <th style="width:70px">יחידת מידה</th>
+            <th class="num" style="width:60px">מחיר</th>
+            <th class="num" style="width:70px">גובה (ס"מ)</th>
+            <th class="num" style="width:70px">רוחב (ס"מ)</th>
+            <th class="num" style="width:50px">כמות</th>
+            <th class="num" style="width:55px">מ"ר</th>
+            <th class="num" style="width:70px">מחיר</th>
+            <th class="num" style="width:80px">סה"כ</th>
+            <th style="width:90px">הערות</th>
+            <th class="no-print" style="width:30px"></th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-table">
+        <div class="empty-icon">📋</div>
+        <p>לחץ <strong>"הוסף מוצר"</strong> כדי להתחיל לבנות את ההצעה</p>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-section" id="summarySection" style="display:none;">
+      <div class="summary-box">
+        <div class="summary-row">
+          <span class="s-label">סה"כ מ"ר</span>
+          <span class="s-value" id="totalSqm">0</span>
+        </div>
+        <div class="summary-row">
+          <span class="s-label">סה"כ</span>
+          <span class="s-value" id="subtotalVal">₪0</span>
+        </div>
+        <div class="summary-row discount">
+          <span class="s-label">
+            <span class="discount-inline">
+              הנחה <input type="number" id="discountInput" value="0" min="0" max="100" oninput="recalcSummary()"> %
+            </span>
+          </span>
+          <span class="s-value" id="discountVal">₪0</span>
+        </div>
+        <div class="summary-row">
+          <span class="s-label">סה"כ לפני מע"מ</span>
+          <span class="s-value" id="beforeVatVal">₪0</span>
+        </div>
+        <div class="summary-row">
+          <span class="s-label">מע"מ (18%)</span>
+          <span class="s-value" id="vatVal">₪0</span>
+        </div>
+        <hr class="summary-divider">
+        <div class="summary-row grand">
+          <span class="s-label">סה"כ כולל מע"מ</span>
+          <span class="s-value" id="grandTotalVal">₪0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Product Picker Modal -->
+<div class="modal-overlay" id="pickerModal" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>בחר מוצר מהמחירון</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input class="modal-search" id="pickerSearch" placeholder="חפש לפי שם מוצר או מספר סעיף..." oninput="filterProducts()">
+      <ul class="product-list" id="productList"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal" style="display:none;" onclick="if(event.target===this)closeDetailModal()">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 id="detailTitle">פרטי מוצר</h3>
+      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-form" id="detailForm"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-green" onclick="confirmAddProduct()">✓ הוסף להצעה</button>
+      <button class="btn btn-outline" onclick="closeDetailModal()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════ USERS ═══════
+const USERS = {
+  '0525326977': 'ענת תובל',
+  '0527907910': 'אביעד מעודד',
+  '0532266612': 'אור פרנדר',
+};
+
+let currentUser = null;
+
+function normalizePhone(raw) {
+  return raw.replace(/[\s\-\(\)]/g, '');
+}
+
+function tryLogin() {
+  const input = document.getElementById('loginPhone');
+  const errEl = document.getElementById('loginError');
+  const phone = normalizePhone(input.value);
+
+  if (!phone) { errEl.textContent = 'הזן מספר טלפון'; input.classList.add('error'); setTimeout(()=>input.classList.remove('error'),400); return; }
+
+  const name = USERS[phone];
+  if (!name) {
+    errEl.textContent = 'מספר טלפון לא מורשה';
+    input.classList.add('error');
+    setTimeout(() => input.classList.remove('error'), 400);
+    return;
+  }
+
+  currentUser = { phone, name };
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('userName').textContent = name;
+  document.getElementById('metaDate').valueAsDate = new Date();
+}
+
+function logout() {
+  if (quoteRows.length && !confirm('להתנתק? הנתונים לא יישמרו')) return;
+  currentUser = null;
+  quoteRows = [];
+  renderTable();
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPhone').value = '';
+  document.getElementById('loginError').textContent = '';
+}
+
+// Enter on login
+document.getElementById('loginPhone').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryLogin();
+});
+
+// ═══════ PRODUCTS ═══════
+const PRODUCTS = [
+  { cat:"מדבקות", items:[
+    { name:"מדבקת קיר - טקסטורה מחוספס", contract:1, unit:'מ"ר', price:70, type:"sqm" },
+    { name:"מדבקת קיר - טקסטורה בטון", contract:2, unit:'מ"ר', price:100, type:"sqm" },
+    { name:"מדבקת קיר - וניל גב אפור", contract:3, unit:'מ"ר', price:45, type:"sqm" },
+    { name:"הדפסה צבעונית איכותית על וניל למינציה מט", contract:4, unit:'מ"ר', price:60, type:"sqm" },
+    { name:"מדבקת התזת חול", contract:29, unit:'מ"ר', price:70, type:"sqm" },
+    { name:"מדבקת התזת חול כולל הדפסה", contract:30, unit:'מ"ר', price:100, type:"sqm" },
+    { name:"תוספת חיתוך צורני למדבקת התזת חול + אפליקיישן", contract:31, unit:'מ"ר', price:120, type:"sqm" },
+    { name:"חיתוך צורני מדבקת אורקל (מדבקת קילוף אותיות)", contract:23, unit:'מ"ר', price:100, type:"sqm" },
+    { name:"מדבקת ריצפה עמידות גבוהה בשחיקה", contract:32, unit:'מ"ר', price:100, type:"sqm" },
+  ]},
+  { cat:"קשיחים", items:[
+    { name:"הדפסה על OSB עובי 12 מ\"מ", contract:12, unit:'מ"ר', price:500, type:"sqm" },
+    { name:"הדפסה על זכוכית כולל מרחיקי ניקל, גב אטום, גימור ליטוש יהלום וחיסום", contract:10, unit:'מ"ר', price:550, type:"sqm" },
+    { name:"הדפסה על פרספקס 5 מ\"מ", contract:11, unit:'מ"ר', price:550, type:"sqm" },
+    { name:"מגן קיר פרספקס שקוף", contract:33, unit:"1X0.2 מטר", price:90, type:"unit" },
+    { name:"תוספת הדפסה למגן קיר", contract:34, unit:"1X0.2 מטר", price:50, type:"unit" },
+  ]},
+  { cat:"בדים", items:[
+    { name:"הדפסה על שמשונית (כולל גימור וטבעות)", contract:7, unit:'מ"ר', price:50, type:"sqm" },
+    { name:"הדפסה על קנבס", contract:13, unit:'מ"ר', price:270, type:"sqm" },
+  ]},
+  { cat:"טפט לדלת", items:[
+    { name:"טפט לדלת מחוספס לבן", contract:5, unit:'מ"ר', price:50, type:"sqm" },
+    { name:"טפט לדלת מחוספס מודפס", contract:6, unit:'מ"ר', price:70, type:"sqm" },
+  ]},
+  { cat:"פרספקס + תלייה", items:[
+    { name:"הדפסה על פרספקס 5 מ\"מ כולל תלייה סט ספייסרים", contract:11, unit:'מ"ר', price:550, type:"sqm" },
+  ]},
+  { cat:"לוגו / אותיות", items:[
+    { name:"חיתוך אותיות PVC מוקצף צביעה בתנור, עובי 10 מ\"מ + הרחקה", contract:24, unit:"רוחב 100 ס\"מ", price:1000, type:"unit" },
+    { name:"חיתוך אותיות פרספקס צביעה, עובי 6 מ\"מ + הרחקה", contract:19, unit:"רוחב 100 ס\"מ", price:1100, type:"unit" },
+    { name:"חיתוך אותיות פרספקס צביעה, עובי 10 מ\"מ + הרחקה", contract:20, unit:"רוחב 100 ס\"מ", price:1300, type:"unit" },
+    { name:'אותיות מוארות לוגו תע"ש פרספקס 60 מ"מ, הילה אחורית', contract:21, unit:"רוחב 100 ס\"מ", price:6500, type:"unit" },
+    { name:'אותיות מוארות לוגו תע"ש פרספקס 60 מ"מ, הילה חזיתית', contract:22, unit:"רוחב 100 ס\"מ", price:4000, type:"unit" },
+  ]},
+  { cat:"רולאפים", items:[
+    { name:"רולאפ 85×200", contract:14, unit:"יחידה", price:160, type:"unit" },
+    { name:"רולאפ 100×200", contract:15, unit:"יחידה", price:250, type:"unit" },
+    { name:"רולאפ 120×200", contract:16, unit:"יחידה", price:350, type:"unit" },
+    { name:"רולאפ 150×200", contract:17, unit:"יחידה", price:500, type:"unit" },
+    { name:"רולאפ 150×200 (דו צדדי)", contract:18, unit:"יחידה", price:750, type:"unit" },
+  ]},
+  { cat:"מוצרים", items:[
+    { name:"פסי עץ פולימר", contract:35, unit:"יחידה 16×250 ס\"מ", price:150, type:"unit" },
+    { name:"לוח מחיק זכוכית + הרחקה + מגש טושים", contract:25, unit:"150×100", price:980, type:"unit" },
+  ]},
+  { cat:"שילוט מואר", items:[
+    { name:"שילוט אותיות מואר 60 מ\"מ - אות 1-20 ס\"מ", contract:26, unit:"אות", price:500, type:"unit" },
+    { name:"שילוט אותיות מואר 60 מ\"מ - אות 21-30 ס\"מ", contract:27, unit:"אות", price:600, type:"unit" },
+    { name:"שילוט אותיות מואר 60 מ\"מ - אות 31-50 ס\"מ", contract:28, unit:"אות", price:1000, type:"unit" },
+  ]},
+  { cat:"אספקה / התקנה", items:[
+    { name:"מינימום התקנה - מתקין 1 (עד שעתיים)", contract:"X", unit:"", price:350, type:"fixed" },
+    { name:"מינימום התקנה - 2 מתקינים (עד שעתיים)", contract:"X", unit:"", price:600, type:"fixed" },
+    { name:"יום עבודה - מתקין 1 (8.5 שעות)", contract:"X", unit:"", price:1500, type:"fixed" },
+    { name:"יום עבודה - 2 מתקינים (8.5 שעות)", contract:"X", unit:"", price:2500, type:"fixed" },
+    { name:"התקנת מדבקות", contract:"X", unit:'מ"ר', price:60, type:"sqm" },
+    { name:"התקנת הזת חול", contract:"X", unit:'מ"ר', price:70, type:"sqm" },
+  ]},
+  { cat:"עיצוב גרפי", items:[
+    { name:"שעות עיצוב", contract:"X", unit:"שעה", price:150, type:"unit" },
+  ]},
+];
+
+let quoteRows = [];
+let pendingProduct = null;
+
+function fmt(n) { return Math.round(n).toLocaleString('he-IL'); }
+
+function calcRow(row) {
+  const p = row.product;
+  const h = parseFloat(row.height) || 0;
+  const w = parseFloat(row.width) || 0;
+  const q = parseFloat(row.qty) || 0;
+  if (p.type === 'sqm') {
+    const sqm = (h * w / 10000) * q;
+    const unitPrice = p.price * (h * w / 10000);
+    return { sqm, unitPrice, total: p.price * sqm };
+  } else {
+    return { sqm: 0, unitPrice: p.price, total: p.price * q };
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('itemsBody');
+  const empty = document.getElementById('emptyState');
+  const summary = document.getElementById('summarySection');
+  if (!quoteRows.length) { tbody.innerHTML=''; empty.style.display=''; summary.style.display='none'; return; }
+  empty.style.display='none';
+  summary.style.display='';
+  tbody.innerHTML = quoteRows.map((row, i) => {
+    const c = calcRow(row);
+    const isSqm = row.product.type === 'sqm';
+    return `<tr>
+      <td class="row-num">${i+1}</td>
+      <td class="item-name">${row.product.name}</td>
+      <td class="num-cell"><span class="contract-badge">${row.product.contract}</span></td>
+      <td>${row.product.unit}</td>
+      <td class="num-cell money">${fmt(row.product.price)}</td>
+      <td class="num-cell">${isSqm && row.height ? row.height : ''}</td>
+      <td class="num-cell">${isSqm && row.width ? row.width : ''}</td>
+      <td class="num-cell">${row.qty || ''}</td>
+      <td class="num-cell">${c.sqm > 0 ? c.sqm.toFixed(2) : (row.product.type==='fixed'?'0':'')}</td>
+      <td class="num-cell money">${c.total > 0 ? fmt(c.unitPrice) : ''}</td>
+      <td class="num-cell total-cell">${c.total > 0 ? fmt(c.total) : ''}</td>
+      <td class="notes-cell">${row.notes || ''}</td>
+      <td class="no-print"><button class="del-btn" title="מחק" onclick="deleteRow(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  recalcSummary();
+}
+
+function recalcSummary() {
+  let totalSqm=0, subtotal=0;
+  quoteRows.forEach(row => { const c=calcRow(row); totalSqm+=c.sqm; subtotal+=c.total; });
+  const disc = parseFloat(document.getElementById('discountInput').value) || 0;
+  const discountAmt = subtotal * disc / 100;
+  const afterDisc = subtotal - discountAmt;
+  const vat = afterDisc * 0.18;
+  const grand = afterDisc + vat;
+  document.getElementById('totalSqm').textContent = totalSqm.toFixed(2);
+  document.getElementById('subtotalVal').textContent = '₪'+fmt(subtotal);
+  document.getElementById('discountVal').textContent = disc > 0 ? '-₪'+fmt(discountAmt) : '₪0';
+  document.getElementById('beforeVatVal').textContent = '₪'+fmt(afterDisc);
+  document.getElementById('vatVal').textContent = '₪'+fmt(vat);
+  document.getElementById('grandTotalVal').textContent = '₪'+fmt(grand);
+}
+
+function deleteRow(idx) { quoteRows.splice(idx,1); renderTable(); }
+function duplicateLastRow() { if(!quoteRows.length)return; quoteRows.push({...quoteRows[quoteRows.length-1]}); renderTable(); }
+function clearAll() { if(quoteRows.length&&!confirm('לנקות את כל השורות?'))return; quoteRows=[]; renderTable(); }
+
+function doPrint() {
+  const titleInput = document.getElementById('metaTitle');
+  if (!titleInput.value.trim()) {
+    titleInput.classList.add('required-empty');
+    titleInput.focus();
+    titleInput.placeholder = '⚠ שדה חובה — הזן כותרת להצעה';
+    setTimeout(() => { titleInput.classList.remove('required-empty'); titleInput.placeholder = 'תיאור הפרויקט (חובה)'; }, 3000);
+    return;
+  }
+  window.print();
+}
+
+// ── Product Picker ──
+function openProductPicker() {
+  document.getElementById('pickerModal').style.display='flex';
+  document.getElementById('pickerSearch').value='';
+  renderProductList('');
+  setTimeout(()=>document.getElementById('pickerSearch').focus(),100);
+}
+function closeModal() { document.getElementById('pickerModal').style.display='none'; }
+
+function renderProductList(filter) {
+  const list=document.getElementById('productList');
+  const f=filter.trim().toLowerCase();
+  let html='';
+  PRODUCTS.forEach(cat => {
+    const items=cat.items.filter(p=>!f||p.name.toLowerCase().includes(f)||String(p.contract).includes(f));
+    if(!items.length)return;
+    html+=`<li class="product-category">${cat.cat}</li>`;
+    items.forEach(p => {
+      const idx=cat.items.indexOf(p);
+      html+=`<li class="product-item" onclick="selectProduct('${cat.cat}',${idx})">
+        <span class="p-name">${p.name}</span>
+        <span class="p-meta">
+          <span class="p-contract">${p.contract}</span>
+          <span>${p.unit}</span>
+          <span class="p-price">₪${fmt(p.price)}</span>
+        </span>
+      </li>`;
+    });
+  });
+  list.innerHTML=html||'<li style="padding:20px;text-align:center;color:#adb5bd">לא נמצאו תוצאות</li>';
+}
+function filterProducts() { renderProductList(document.getElementById('pickerSearch').value); }
+
+function selectProduct(catName,itemIdx) {
+  closeModal();
+  pendingProduct={...PRODUCTS.find(c=>c.cat===catName).items[itemIdx]};
+  openDetailModal();
+}
+
+function openDetailModal() {
+  const p=pendingProduct;
+  document.getElementById('detailTitle').textContent=p.name;
+  const isSqm=p.type==='sqm';
+  document.getElementById('detailForm').innerHTML=`
+    <div class="detail-group"><label>סעיף בחוזה</label><input class="readonly" value="${p.contract}" readonly></div>
+    <div class="detail-group"><label>יחידת מידה</label><input class="readonly" value="${p.unit}" readonly></div>
+    <div class="detail-group"><label>מחיר ל${p.unit||'יחידה'}</label><input class="readonly" value="₪${fmt(p.price)}" readonly></div>
+    <div class="detail-group"><label>כמות</label><input type="number" id="dQty" min="0" step="1" value="1" oninput="updateDetailPreview()"></div>
+    ${isSqm?`
+    <div class="detail-group"><label>גובה (ס"מ)</label><input type="number" id="dHeight" min="0" step="1" placeholder="גובה" oninput="updateDetailPreview()"></div>
+    <div class="detail-group"><label>רוחב (ס"מ)</label><input type="number" id="dWidth" min="0" step="1" placeholder="רוחב" oninput="updateDetailPreview()"></div>
+    `:`<input type="hidden" id="dHeight" value="0"><input type="hidden" id="dWidth" value="0">`}
+    <div class="detail-group full"><label>הערות</label><input type="text" id="dNotes" placeholder="הערות (לא חובה)"></div>
+    <div class="detail-preview" id="detailPreview">
+      <span class="dp-label">${isSqm?'מ"ר: 0 | ':''}סה"כ:</span>
+      <span class="dp-value">₪0</span>
+    </div>
+  `;
+  document.getElementById('detailModal').style.display='flex';
+  setTimeout(()=>{(isSqm?document.getElementById('dHeight'):document.getElementById('dQty'))?.focus()},100);
+}
+
+function updateDetailPreview() {
+  const p=pendingProduct;
+  const h=parseFloat(document.getElementById('dHeight')?.value)||0;
+  const w=parseFloat(document.getElementById('dWidth')?.value)||0;
+  const q=parseFloat(document.getElementById('dQty')?.value)||0;
+  const isSqm=p.type==='sqm';
+  let sqm=0,total=0;
+  if(isSqm){sqm=(h*w/10000)*q;total=p.price*sqm}else{total=p.price*q}
+  const prev=document.getElementById('detailPreview');
+  if(prev)prev.innerHTML=`
+    <span class="dp-label">${isSqm?'מ"ר: '+sqm.toFixed(2)+' | ':''}סה"כ:</span>
+    <span class="dp-value">₪${fmt(total)}</span>`;
+}
+
+function closeDetailModal(){document.getElementById('detailModal').style.display='none';pendingProduct=null}
+
+function confirmAddProduct() {
+  quoteRows.push({
+    product:pendingProduct,
+    height:document.getElementById('dHeight')?.value||'',
+    width:document.getElementById('dWidth')?.value||'',
+    qty:document.getElementById('dQty')?.value||'1',
+    notes:document.getElementById('dNotes')?.value||'',
+  });
+  closeDetailModal();
+  renderTable();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('detailModal').style.display==='flex'){e.preventDefault();confirmAddProduct()}
+  if(e.key==='Escape'){
+    if(document.getElementById('detailModal').style.display==='flex')closeDetailModal();
+    else if(document.getElementById('pickerModal').style.display==='flex')closeModal();
+  }
+});
+
+renderTable();
+</script>
+</body>
+</html>
