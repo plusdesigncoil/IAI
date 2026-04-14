@@ -7,6 +7,12 @@
 <meta name="theme-color" content="#2d5f8a">
 <title>הצעת מחיר — פלוס דיזיין</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="vendor/pdf.min.js"></script>
+<script>
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+  }
+</script>
 <style>
 :root {
   --blue:#4482c4; --blue-dark:#2d5f8a; --blue-light:#e8f0f8;
@@ -220,6 +226,13 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 }
 .detail-preview .dp-label{color:var(--gray-500)}
 .detail-preview .dp-value{font-weight:700;color:var(--green);font-size:15px}
+
+/* PDF upload info box */
+.upload-field{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;gap:12px}
+.upload-field span{color:var(--gray-500)}
+.upload-field strong{color:var(--ink);font-weight:700;text-align:left;direction:ltr}
+.upload-field .u-total{color:var(--green);font-size:15px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 .modal-footer{padding:14px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-start;gap:10px}
 
 /* ══ MOBILE (≤ 768px) — screen only so print always uses the desktop layout ══ */
@@ -545,6 +558,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
     <div class="actions-bar no-print">
       <button class="btn btn-blue" onclick="openProductPicker()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> הוסף מוצר</button>
       <button class="btn btn-outline" onclick="openPriceGen()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg> ייצר לפי מחיר</button>
+      <button class="btn btn-outline" onclick="triggerPdfUpload()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> העלה PDF</button>
       <span class="spacer"></span>
       <button class="btn btn-outline" onclick="doPrint()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> הדפסה/שמירה</button>
       <button class="btn btn-red btn-sm" onclick="clearAll()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg> נקה</button>
@@ -669,6 +683,39 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
     <div class="modal-footer">
       <button class="btn btn-green" onclick="runPriceGen()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg> ייצר הצעה</button>
       <button class="btn btn-outline" onclick="closePriceGen()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input for PDF upload -->
+<input type="file" id="pdfFileInput" accept=".pdf,application/pdf" style="display:none" onchange="handlePdfUpload(event)">
+
+<!-- PDF Upload Modal -->
+<div class="modal-overlay" id="uploadModal" style="display:none;" onclick="if(event.target===this)closeUploadModal()">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>ייבוא הצעה מקובץ PDF</h3>
+      <button class="modal-close" onclick="closeUploadModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="uploadStatus" style="text-align:center;color:var(--gray-500);padding:16px 0;font-size:13px"></div>
+      <div id="uploadInfoBox" style="display:none">
+        <div class="upload-field"><span>מספר הצעה</span><strong id="uInfoNum">—</strong></div>
+        <div class="upload-field"><span>כותרת</span><strong id="uInfoTitle">—</strong></div>
+        <div class="upload-field"><span>לכבוד</span><strong id="uInfoCustomer">—</strong></div>
+        <div class="upload-field"><span>שורות בהצעה המקורית</span><strong id="uInfoItems">0</strong></div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid var(--gray-200)">
+        <div class="upload-field"><span>סה"כ לפני מע"מ</span><strong id="uInfoNet" class="u-total">—</strong></div>
+        <div class="upload-field"><span>סה"כ כולל מע"מ</span><strong id="uInfoGross" class="u-total">—</strong></div>
+        <p style="font-size:11.5px;color:var(--gray-500);margin-top:14px;line-height:1.5">
+          תיווצר הצעה חדשה לפי המחירון הפנימי, עם סכום זהה לסכום שבקובץ.
+        </p>
+      </div>
+      <div id="uploadError" style="color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-green" id="uploadGenBtn" onclick="runPdfGen()" disabled><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg> ייצר הצעה חדשה</button>
+      <button class="btn btn-outline" onclick="closeUploadModal()">ביטול</button>
     </div>
   </div>
 </div>
@@ -1340,6 +1387,187 @@ function runPriceGen() {
   saveQuote();
 }
 
+// ── PDF Upload & Scan ──
+// Parses an uploaded quote PDF, extracts the total, and uses generateByPrice
+// to rebuild an equivalent proposal from our internal catalog.
+let pdfExtracted = null;
+
+function triggerPdfUpload() {
+  if (typeof pdfjsLib === 'undefined') {
+    document.getElementById('uploadModal').style.display = 'flex';
+    document.getElementById('uploadStatus').textContent = '';
+    document.getElementById('uploadError').textContent = 'לא הצלחתי לטעון את מנתח ה-PDF. בדוק חיבור אינטרנט ונסה שוב.';
+    document.getElementById('uploadInfoBox').style.display = 'none';
+    document.getElementById('uploadGenBtn').disabled = true;
+    return;
+  }
+  document.getElementById('pdfFileInput').click();
+}
+
+async function handlePdfUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = ''; // allow re-uploading the same file
+  if (!file) return;
+
+  const modal = document.getElementById('uploadModal');
+  const status = document.getElementById('uploadStatus');
+  const error = document.getElementById('uploadError');
+  const infoBox = document.getElementById('uploadInfoBox');
+  const genBtn = document.getElementById('uploadGenBtn');
+
+  modal.style.display = 'flex';
+  status.textContent = 'מנתח קובץ PDF...';
+  error.textContent = '';
+  infoBox.style.display = 'none';
+  genBtn.disabled = true;
+  pdfExtracted = null;
+
+  try {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      // PDF.js emits each Hebrew glyph as a separate item in x-coordinate
+      // order (left→right). For RTL pages we need to group items into lines
+      // by their y-coordinate and then sort each line x-descending so the
+      // Hebrew characters line up in logical reading order.
+      const lines = new Map();
+      for (const item of content.items) {
+        if (!item.str) continue;
+        const y = Math.round(item.transform[5]);
+        if (!lines.has(y)) lines.set(y, []);
+        lines.get(y).push(item);
+      }
+      const ys = [...lines.keys()].sort((a, b) => b - a);
+      for (const y of ys) {
+        const line = lines.get(y).sort((a, b) => b.transform[4] - a.transform[4]);
+        text += line.map(it => it.str).join('') + '\n';
+      }
+    }
+
+    const data = extractQuoteData(text);
+    if (!data.net && !data.gross) {
+      throw new Error('לא מצאתי סכום הצעה בקובץ');
+    }
+    pdfExtracted = data;
+
+    status.textContent = '';
+    infoBox.style.display = '';
+    document.getElementById('uInfoNum').textContent = data.quoteNum || '—';
+    document.getElementById('uInfoTitle').textContent = data.title || '—';
+    document.getElementById('uInfoCustomer').textContent = data.customer || '—';
+    document.getElementById('uInfoItems').textContent = data.itemCount || 0;
+    document.getElementById('uInfoNet').textContent = data.net ? '₪' + fmt(data.net) : '—';
+    document.getElementById('uInfoGross').textContent = data.gross ? '₪' + fmt(data.gross) : '—';
+    genBtn.disabled = false;
+  } catch (e) {
+    status.textContent = '';
+    error.textContent = 'שגיאה בקריאת הקובץ: ' + (e.message || e);
+  }
+}
+
+// Extracts quote metadata and totals from RTL-sorted text pulled out of a PDF.
+// Handles Senzey-style quotes (as used by פלוס דיזיין).
+function extractQuoteData(rawText) {
+  // Normalise Hebrew gershayim/geresh to ASCII punctuation.
+  const text = rawText
+    .replace(/[\u05F4\u2033]/g, '"')
+    .replace(/[\u05F3\u2032]/g, "'");
+
+  // The RTL sorter put characters in reading order, but the glyphs can have
+  // stray tiny gaps between them. "flat" strips all whitespace for easier
+  // matching; "lines" keeps the per-line structure for counting item rows.
+  const flat = text.replace(/[\s\u200E\u200F\u00A0]/g, '');
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const pickNumber = m => {
+    if (!m) return null;
+    const n = parseFloat(m[1].replace(/,/g, ''));
+    return isFinite(n) ? n : null;
+  };
+
+  // Quote number: "הצעת מחיר מס` 58566"
+  const quoteNumMatch = flat.match(/הצעתמחירמס['`´]?(\d+)/);
+
+  // Totals: "סה"כ לפני מע"מ 4,800.00" and "סה"כ לתשלום 5,664.00"
+  const netMatch = flat.match(/סה"?כלפנימע"?מ([\d,]+\.?\d*)/);
+  const grossMatch = flat.match(/סה"?כלתשלום([\d,]+\.?\d*)/);
+
+  // Customer: stop at date (dd/mm/yyyy), email, or next field label.
+  const customerMatch = flat.match(/לכבוד:?(.+?)(?:\d{1,2}\/\d{1,2}\/\d{2,4}|עוסקמורשה|ח\.פ|נייד|אימייל|לידי|$)/);
+  let customer = customerMatch ? customerMatch[1].trim() : null;
+  if (customer) customer = customer.replace(/[\u200E\u200F]/g, '').replace(/\s+/g, ' ').trim();
+
+  // Title: what sits between the quote number and "לכבוד", read from the
+  // non-flat text so we keep word spaces for display. We take the first line
+  // after the quote-number line, collapsing multi-spaces.
+  let title = null;
+  const titleLineIdx = lines.findIndex(l => /הצעת.*מחיר.*מס/.test(l.replace(/\s+/g, '')));
+  if (titleLineIdx >= 0 && lines[titleLineIdx + 1] && !/לכבוד/.test(lines[titleLineIdx + 1])) {
+    title = lines[titleLineIdx + 1].replace(/\s+/g, ' ').trim();
+  }
+
+  // Item rows sit between the table header and the summary row. Cut at the
+  // first summary-ish line so we don't start counting the numbered tos.
+  const summaryIdx = lines.findIndex(l => {
+    const f = l.replace(/\s+/g, '');
+    return /סה"?כלפני/.test(f) || /סה"?כלתשלום/.test(f);
+  });
+  const scanLines = summaryIdx >= 0 ? lines.slice(0, summaryIdx) : lines;
+  let itemCount = 0;
+  for (const line of scanLines) {
+    if (!/^\s*\d+\.\s*[א-ת]/.test(line)) continue;
+    const nums = line.match(/\d[\d,.]*/g) || [];
+    if (nums.length >= 2) itemCount++;
+  }
+
+  return {
+    quoteNum: quoteNumMatch ? quoteNumMatch[1] : null,
+    customer,
+    title,
+    net: pickNumber(netMatch),
+    gross: pickNumber(grossMatch),
+    itemCount,
+  };
+}
+
+function runPdfGen() {
+  if (!pdfExtracted) return;
+  const err = document.getElementById('uploadError');
+  err.textContent = '';
+
+  // Net target is authoritative; fall back to gross ÷ 1.18.
+  const target = pdfExtracted.net || (pdfExtracted.gross ? pdfExtracted.gross / 1.18 : 0);
+  if (!target || target <= 0) {
+    err.textContent = 'לא הצלחתי לחלץ סכום תקין מהקובץ';
+    return;
+  }
+
+  const result = generateByPrice(target);
+  if (!result) {
+    err.textContent = 'שגיאה פנימית, נסה שוב';
+    return;
+  }
+
+  if (quoteRows.length && !confirm('הפעולה תחליף את ההצעה הנוכחית. להמשיך?')) return;
+
+  quoteRows = result.rows;
+  document.getElementById('discountInput').value = result.discountPct || 0;
+  if (pdfExtracted.title) document.getElementById('metaTitle').value = pdfExtracted.title;
+  if (pdfExtracted.quoteNum) document.getElementById('metaQuoteNum').value = pdfExtracted.quoteNum;
+  closeUploadModal();
+  renderTable();
+  saveQuote();
+}
+
+function closeUploadModal() {
+  document.getElementById('uploadModal').style.display = 'none';
+  document.getElementById('uploadError').textContent = '';
+  pdfExtracted = null;
+}
+
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     if(document.getElementById('detailModal').style.display==='flex'){e.preventDefault();confirmAddProduct();return}
@@ -1348,6 +1576,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     if(document.getElementById('detailModal').style.display==='flex')closeDetailModal();
     else if(document.getElementById('priceGenModal').style.display==='flex')closePriceGen();
+    else if(document.getElementById('uploadModal').style.display==='flex')closeUploadModal();
     else if(document.getElementById('pickerModal').style.display==='flex')closeModal();
   }
 });
