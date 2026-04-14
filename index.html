@@ -167,39 +167,41 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   display:flex;justify-content:flex-end;gap:40px;
 }
 .summary-box{min-width:260px}
-.summary-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px}
 .summary-row .s-label{color:var(--gray-500);font-weight:500}
-.summary-row .s-value{font-weight:600;font-size:14px}
+.summary-row .s-value{font-weight:600;font-size:12.5px}
 .summary-row.discount .s-value{color:var(--red)}
-.summary-divider{border:none;border-top:2px solid var(--ink);margin:8px 0}
-.summary-row.grand{font-size:16px;font-weight:800;padding:8px 0 0}
+.summary-divider{border:none;border-top:2px solid var(--ink);margin:7px 0}
+.summary-row.grand{font-size:14px;font-weight:800;padding:6px 0 0}
 .summary-row.grand .s-value{color:var(--blue-dark)}
-.discount-inline{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
-.discount-inline input{
-  width:72px;padding:3px 6px;border:1.5px solid var(--gray-200);
-  border-radius:4px;font-family:inherit;font-size:13px;text-align:center;
-}
-.discount-inline input#discountInputILS{width:80px}
-.discount-inline .discount-sep{color:var(--gray-300);font-weight:400;margin:0 2px}
-.discount-inline input:focus{outline:none;border-color:var(--blue)}
-
-/* Inline editable summary values (before-VAT and grand total) — look like
-   plain text by default, become an input box on hover/focus. */
-.s-value{display:inline-flex;align-items:baseline;gap:1px}
-.s-currency{color:inherit}
-.s-inline-input{
+/* Inline editable fields in the summary. A subtle background + border make
+   it obvious they're editable; hover and focus intensify the cue. Used by
+   both the percent/ILS discount inputs and the before/grand total inputs. */
+.s-value{display:inline-flex;align-items:baseline;gap:2px}
+.s-currency{color:inherit;font-weight:inherit}
+.s-neg{color:inherit;font-weight:inherit}
+.s-inline-input,.s-pct-input{
   font-family:inherit;font-size:inherit;font-weight:inherit;color:inherit;
-  border:1.5px solid transparent;background:transparent;
-  padding:2px 4px;border-radius:4px;width:110px;
-  text-align:left;direction:ltr;cursor:pointer;
+  background:var(--gray-50);
+  border:1.5px solid var(--gray-200);
+  border-radius:4px;
+  padding:2px 6px;
+  text-align:left;direction:ltr;
+  transition:background .12s,border-color .12s;
+  -moz-appearance:textfield;
 }
-.s-inline-input:hover{border-color:var(--gray-200);cursor:text}
-.s-inline-input:focus{outline:none;border-color:var(--blue);background:var(--white);cursor:text}
+.s-inline-input{width:100px}
+.s-pct-input{width:60px;text-align:center;direction:ltr}
+.s-inline-input:hover,.s-pct-input:hover{border-color:var(--gray-400);background:#fff}
+.s-inline-input:focus,.s-pct-input:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 2px rgba(68,130,196,.15)}
 .s-inline-input::-webkit-outer-spin-button,
-.s-inline-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.s-inline-input[type=number]{-moz-appearance:textfield}
+.s-inline-input::-webkit-inner-spin-button,
+.s-pct-input::-webkit-outer-spin-button,
+.s-pct-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .s-inline-grand{font-weight:800}
 .s-print-value{display:none}
+.summary-row.discount.is-zero .s-neg,
+.summary-row.discount.is-zero .s-currency{display:none}
 
 /* Modal */
 .modal-overlay{
@@ -406,10 +408,9 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .actions-bar,.no-print,.row-btn,.del-btn,.row-actions,.row-actions-cell,.login-overlay{display:none!important}
   .items-table thead th,.company-header,.items-table tbody tr:nth-child(even) td,
   .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .discount-inline input{border:none;font-weight:700;background:transparent}
-  .discount-inline .discount-sep{display:none!important}
   .required-star{display:none!important}
   .summary-row.discount.is-zero{display:none!important}
+  .s-pct-input{border:none!important;background:transparent!important;padding:0!important;width:auto!important;font-weight:700!important;box-shadow:none!important}
   .s-inline-input{display:none!important}
   .s-print-value{display:inline!important;color:inherit;font-weight:inherit}
 
@@ -638,14 +639,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
         </div>
         <div class="summary-row discount">
           <span class="s-label">
-            <span class="discount-inline">
-              הנחה
-              <input type="number" id="discountInput" value="0" min="0" max="100" step="0.1" oninput="onDiscountPctInput()"> %
-              <span class="discount-sep">|</span>
-              <span class="discount-ils-group no-print"><input type="number" id="discountInputILS" value="0" min="0" step="1" oninput="onDiscountILSInput()"> ₪</span>
-            </span>
+            הנחה <input type="number" id="discountInput" class="s-pct-input" value="0" min="0" max="100" step="0.1" oninput="onDiscountPctInput()"> %
           </span>
-          <span class="s-value" id="discountVal">₪0</span>
+          <span class="s-value">
+            <span class="s-neg">-</span><span class="s-currency">₪</span><input type="number" id="discountInputILS" class="s-inline-input" value="0" step="0.01" oninput="onDiscountILSInput()"><span class="s-print-value" id="discountPrint">0</span>
+          </span>
         </div>
         <div class="summary-row">
           <span class="s-label">סה"כ לפני מע"מ</span>
@@ -1083,7 +1081,6 @@ function recalcSummary() {
   // Static spans — always update.
   document.getElementById('totalSqm').textContent = totalSqm.toFixed(2);
   document.getElementById('subtotalVal').textContent = '₪' + fmtMoney(subtotal);
-  document.getElementById('discountVal').textContent = discountAmt > 0 ? '-₪' + fmtMoney(discountAmt) : '₪0';
   document.getElementById('vatVal').textContent = '₪' + fmtMoney(vat);
 
   // Live inputs — update unless the user is actively typing into that exact
@@ -1103,6 +1100,7 @@ function recalcSummary() {
   // Print mirrors — display-only spans used in place of the inputs in print
   // so totals show with thousand separators and the same fmtMoney treatment
   // as every other summary line.
+  document.getElementById('discountPrint').textContent = fmtMoney(discountAmt);
   document.getElementById('beforeVatPrint').textContent = fmtMoney(afterDisc);
   document.getElementById('grandTotalPrint').textContent = fmtMoney(grand);
 
