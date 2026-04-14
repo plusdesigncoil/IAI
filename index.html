@@ -49,6 +49,12 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 
 /* ══ MAIN APP ══ */
 .page-wrap{max-width:900px;margin:20px auto;padding:0 16px;display:none}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 4px 14px;gap:12px;
+}
+.topbar-user{font-size:13px;color:var(--gray-700)}
+.topbar-user strong{color:var(--ink);font-weight:700}
 .quote-doc{background:var(--white);border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden}
 
 /* Company Header — LTR aligned (left side) */
@@ -95,8 +101,10 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .btn{
   padding:8px 16px;border:none;border-radius:var(--radius);
   font-family:inherit;font-size:12.5px;font-weight:600;
-  cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;
+  cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;
 }
+.btn .icon{width:15px;height:15px;flex-shrink:0}
+.modal-footer .btn .icon{width:16px;height:16px}
 .btn-blue{background:var(--blue);color:#fff}
 .btn-blue:hover{background:var(--blue-dark)}
 .btn-outline{background:transparent;border:1.5px solid var(--gray-300);color:var(--gray-700)}
@@ -135,10 +143,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .items-table .row-actions{display:flex;gap:2px;justify-content:center;white-space:nowrap}
 .items-table .row-btn,.items-table .del-btn{
   background:none;border:none;color:var(--gray-400);cursor:pointer;
-  font-size:14px;padding:3px 5px;border-radius:3px;transition:all .15s;
+  padding:4px;border-radius:3px;transition:all .15s;
+  display:inline-flex;align-items:center;justify-content:center;
 }
+.items-table .row-btn svg,.items-table .del-btn svg{width:14px;height:14px}
 .items-table .row-btn:hover{color:var(--blue);background:var(--blue-light)}
-.items-table .del-btn{font-size:15px}
 .items-table .del-btn:hover{color:var(--red);background:#fdecea}
 .empty-table{text-align:center;padding:40px 20px;color:var(--gray-400)}
 .empty-table .empty-icon{font-size:36px;margin-bottom:8px}
@@ -309,9 +318,10 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .items-table .row-actions{gap:6px}
   .items-table .row-btn,
   .items-table .del-btn{
-    padding:10px 12px;font-size:16px;min-width:40px;min-height:40px;
+    padding:10px 12px;min-width:40px;min-height:40px;
     border:1px solid var(--gray-200);border-radius:6px;background:var(--white);
   }
+  .items-table .row-btn svg,.items-table .del-btn svg{width:18px;height:18px}
   .items-table .del-btn{color:var(--red)}
 
   .empty-table{padding:32px 16px}
@@ -352,10 +362,10 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 }
 
 @media print{
-  @page{margin:8mm}
+  @page{margin:6mm 5mm}
   body{background:#fff;font-size:10px}
-  .page-wrap{margin:0;padding:0;max-width:100%;display:block!important}
-  .quote-doc{box-shadow:none;border-radius:0}
+  .page-wrap{margin:0!important;padding:0!important;max-width:100%!important;width:100%!important;display:block!important}
+  .quote-doc{box-shadow:none;border-radius:0;width:100%!important}
   .actions-bar,.no-print,.row-btn,.del-btn,.row-actions,.row-actions-cell,.login-overlay{display:none!important}
   .items-table thead th,.company-header,.items-table tbody tr:nth-child(even) td,
   .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -387,24 +397,24 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
     font-weight:700!important;font-size:10.5px!important;border-radius:0!important;
   }
 
-  /* ── Items table — compact fixed layout so everything fits on one page ── */
+  /* ── Items table — percentage widths so it fills the full page width ── */
   .items-section{padding:0!important;background:transparent!important}
   .items-table{display:table!important;width:100%!important;background:transparent!important;table-layout:fixed!important;font-size:8.5px!important}
   .items-table thead{display:table-header-group!important}
-  .items-table thead th{padding:4px 2px!important;font-size:8px!important;line-height:1.15!important;white-space:normal!important;border-bottom-width:1.5px!important}
-  /* Explicit narrow column widths; פרטים (item name) flexes */
-  .items-table thead th:nth-child(1){width:22px!important}
+  .items-table thead th{padding:4px 3px!important;font-size:8px!important;line-height:1.15!important;white-space:normal!important;border-bottom-width:1.5px!important}
+  /* Percentage column widths: פרטים gets the lion's share (~28%), numeric cols are narrow */
+  .items-table thead th:nth-child(1){width:3%!important}
   .items-table thead th:nth-child(2){width:auto!important}
-  .items-table thead th:nth-child(3){width:38px!important}
-  .items-table thead th:nth-child(4){width:48px!important}
-  .items-table thead th:nth-child(5){width:40px!important}
-  .items-table thead th:nth-child(6){width:38px!important}
-  .items-table thead th:nth-child(7){width:38px!important}
-  .items-table thead th:nth-child(8){width:32px!important}
-  .items-table thead th:nth-child(9){width:34px!important}
-  .items-table thead th:nth-child(10){width:40px!important}
-  .items-table thead th:nth-child(11){width:50px!important}
-  .items-table thead th:nth-child(12){width:56px!important}
+  .items-table thead th:nth-child(3){width:6%!important}
+  .items-table thead th:nth-child(4){width:8%!important}
+  .items-table thead th:nth-child(5){width:6%!important}
+  .items-table thead th:nth-child(6){width:6%!important}
+  .items-table thead th:nth-child(7){width:6%!important}
+  .items-table thead th:nth-child(8){width:5%!important}
+  .items-table thead th:nth-child(9){width:5.5%!important}
+  .items-table thead th:nth-child(10){width:6%!important}
+  .items-table thead th:nth-child(11){width:7%!important}
+  .items-table thead th:nth-child(12){width:10%!important}
   .items-table thead th:nth-child(13){display:none!important}
 
   .items-table tbody{display:table-row-group!important}
@@ -458,6 +468,13 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 
 <!-- ══════ MAIN APP ══════ -->
 <div class="page-wrap" id="mainApp">
+  <div class="topbar no-print">
+    <span class="topbar-user">שלום, <strong id="topbarUserName">—</strong></span>
+    <button class="btn btn-outline btn-sm" onclick="logout()" title="התנתק">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      התנתק
+    </button>
+  </div>
   <div class="quote-doc">
 
     <!-- Company Header — info aligned LEFT -->
@@ -526,12 +543,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 
     <!-- Actions -->
     <div class="actions-bar no-print">
-      <button class="btn btn-blue" onclick="openProductPicker()">➕ הוסף מוצר</button>
-      <button class="btn btn-outline" onclick="openPriceGen()">✨ ייצר לפי מחיר</button>
+      <button class="btn btn-blue" onclick="openProductPicker()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> הוסף מוצר</button>
+      <button class="btn btn-outline" onclick="openPriceGen()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg> ייצר לפי מחיר</button>
       <span class="spacer"></span>
-      <button class="btn btn-outline" onclick="doPrint()">🖨️ הדפסה/שמירה</button>
-      <button class="btn btn-red btn-sm" onclick="clearAll()">🗑️ נקה</button>
-      <button class="btn btn-outline btn-sm" onclick="logout()" title="התנתק">🚪 התנתק</button>
+      <button class="btn btn-outline" onclick="doPrint()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> הדפסה/שמירה</button>
+      <button class="btn btn-red btn-sm" onclick="clearAll()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg> נקה</button>
     </div>
 
     <!-- Items Table -->
@@ -624,7 +640,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
       <div class="detail-form" id="detailForm"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-green" onclick="confirmAddProduct()">✓ הוסף להצעה</button>
+      <button class="btn btn-green" onclick="confirmAddProduct()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> הוסף להצעה</button>
       <button class="btn btn-outline" onclick="closeDetailModal()">ביטול</button>
     </div>
   </div>
@@ -634,24 +650,24 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 <div class="modal-overlay" id="priceGenModal" style="display:none;" onclick="if(event.target===this)closePriceGen()">
   <div class="modal" style="max-width:440px;">
     <div class="modal-header">
-      <h3>✨ ייצר הצעה לפי מחיר יעד</h3>
+      <h3>ייצר הצעה לפי מחיר יעד</h3>
       <button class="modal-close" onclick="closePriceGen()">✕</button>
     </div>
     <div class="modal-body">
       <div class="detail-form">
         <div class="detail-group">
-          <label>כולל מע"מ (18%)</label>
-          <input type="number" id="pgGross" min="1" step="1" placeholder="למשל: 3000" oninput="pgSync('gross')">
+          <label>לפני מע"מ</label>
+          <input type="number" id="pgNet" min="1" step="1" oninput="pgSync('net')">
         </div>
         <div class="detail-group">
-          <label>לפני מע"מ</label>
-          <input type="number" id="pgNet" min="1" step="1" placeholder="למשל: 2542" oninput="pgSync('net')">
+          <label>כולל מע"מ (18%)</label>
+          <input type="number" id="pgGross" min="1" step="1" oninput="pgSync('gross')">
         </div>
       </div>
       <div id="pgError" style="color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-green" onclick="runPriceGen()">✨ ייצר הצעה</button>
+      <button class="btn btn-green" onclick="runPriceGen()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg> ייצר הצעה</button>
       <button class="btn btn-outline" onclick="closePriceGen()">ביטול</button>
     </div>
   </div>
@@ -723,6 +739,7 @@ function enterApp(name) {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
   document.getElementById('userName').textContent = name;
+  document.getElementById('topbarUserName').textContent = name;
   document.getElementById('metaDate').valueAsDate = new Date();
   loadQuote();
   renderTable();
@@ -895,9 +912,9 @@ function renderTable() {
       <td class="num-cell total-cell" data-label='סה"כ'>${c.total > 0 ? fmt(c.total) : ''}</td>
       <td class="notes-cell" data-label="הערות">${row.notes || ''}</td>
       <td class="no-print row-actions-cell"><div class="row-actions">
-        <button class="row-btn" title="ערוך" onclick="editRow(${i})">✎</button>
-        <button class="row-btn" title="שכפל" onclick="duplicateRow(${i})">⎘</button>
-        <button class="del-btn" title="מחק" onclick="deleteRow(${i})">✕</button>
+        <button class="row-btn" title="ערוך" onclick="editRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="row-btn" title="שכפל" onclick="duplicateRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="del-btn" title="מחק" onclick="deleteRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div></td>
     </tr>`;
   }).join('');
@@ -958,7 +975,10 @@ function renderProductList(filter) {
   const f=filter.trim().toLowerCase();
   let html='';
   PRODUCTS.forEach(cat => {
-    const items=cat.items.filter(p=>!f||p.name.toLowerCase().includes(f)||String(p.contract).includes(f));
+    const catMatches = !!f && cat.cat.toLowerCase().includes(f);
+    const items = cat.items.filter(p =>
+      !f || catMatches || p.name.toLowerCase().includes(f) || String(p.contract).includes(f)
+    );
     if(!items.length)return;
     html+=`<li class="product-category">${cat.cat}</li>`;
     items.forEach(p => {
