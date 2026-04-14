@@ -176,12 +176,30 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .summary-row.grand .s-value{color:var(--blue-dark)}
 .discount-inline{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
 .discount-inline input{
-  width:55px;padding:3px 6px;border:1.5px solid var(--gray-200);
+  width:72px;padding:3px 6px;border:1.5px solid var(--gray-200);
   border-radius:4px;font-family:inherit;font-size:13px;text-align:center;
 }
-.discount-inline input#discountInputILS{width:72px}
+.discount-inline input#discountInputILS{width:80px}
 .discount-inline .discount-sep{color:var(--gray-300);font-weight:400;margin:0 2px}
 .discount-inline input:focus{outline:none;border-color:var(--blue)}
+
+/* Inline editable summary values (before-VAT and grand total) — look like
+   plain text by default, become an input box on hover/focus. */
+.s-value{display:inline-flex;align-items:baseline;gap:1px}
+.s-currency{color:inherit}
+.s-inline-input{
+  font-family:inherit;font-size:inherit;font-weight:inherit;color:inherit;
+  border:1.5px solid transparent;background:transparent;
+  padding:2px 4px;border-radius:4px;width:110px;
+  text-align:left;direction:ltr;cursor:pointer;
+}
+.s-inline-input:hover{border-color:var(--gray-200);cursor:text}
+.s-inline-input:focus{outline:none;border-color:var(--blue);background:var(--white);cursor:text}
+.s-inline-input::-webkit-outer-spin-button,
+.s-inline-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.s-inline-input[type=number]{-moz-appearance:textfield}
+.s-inline-grand{font-weight:800}
+.s-print-value{display:none}
 
 /* Modal */
 .modal-overlay{
@@ -380,15 +398,20 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 }
 
 @media print{
-  @page{margin:6mm 5mm}
-  body{background:#fff;font-size:10px}
-  .page-wrap{margin:0!important;padding:0!important;max-width:100%!important;width:100%!important;display:block!important}
-  .quote-doc{box-shadow:none;border-radius:0;width:100%!important}
+  @page{margin:6mm 4mm}
+  body{background:#fff;font-size:10px;margin:0!important;padding:0!important}
+  html{margin:0!important;padding:0!important}
+  .page-wrap{margin:0!important;padding:0!important;max-width:none!important;width:100%!important;display:block!important}
+  .quote-doc{box-shadow:none;border-radius:0;width:100%!important;max-width:none!important;margin:0!important}
   .actions-bar,.no-print,.row-btn,.del-btn,.row-actions,.row-actions-cell,.login-overlay{display:none!important}
   .items-table thead th,.company-header,.items-table tbody tr:nth-child(even) td,
   .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .discount-inline input{border:none;font-weight:700;background:transparent}
   .discount-inline .discount-sep{display:none!important}
+  .required-star{display:none!important}
+  .summary-row.discount.is-zero{display:none!important}
+  .s-inline-input{display:none!important}
+  .s-print-value{display:inline!important;color:inherit;font-weight:inherit}
 
   /* ── Company header ── */
   .company-header{flex-direction:row!important;padding:12px 20px 10px!important;align-items:flex-start!important;text-align:initial!important;border-bottom-width:2px!important}
@@ -417,23 +440,24 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   }
 
   /* ── Items table — percentage widths so it fills the full page width ── */
-  .items-section{padding:0!important;background:transparent!important}
-  .items-table{display:table!important;width:100%!important;background:transparent!important;table-layout:fixed!important;font-size:8.5px!important}
+  .items-section{padding:0!important;background:transparent!important;width:100%!important}
+  .items-table{display:table!important;width:100%!important;background:transparent!important;table-layout:fixed!important;font-size:8.5px!important;border-collapse:collapse!important;margin:0!important}
   .items-table thead{display:table-header-group!important}
   .items-table thead th{padding:4px 3px!important;font-size:8px!important;line-height:1.15!important;white-space:normal!important;border-bottom-width:1.5px!important}
-  /* Percentage column widths: פרטים gets the lion's share, numeric cols are narrow,
-     notes column (12) is hidden and the notes render inline under the item name. */
+  /* Explicit percentage column widths that sum to 100% — "פרטים" gets the
+     widest slice. No "auto" column so table-layout:fixed has zero ambiguity
+     and the table always fills the full printable width. */
   .items-table thead th:nth-child(1){width:3%!important}
-  .items-table thead th:nth-child(2){width:auto!important}
-  .items-table thead th:nth-child(3){width:7%!important}
-  .items-table thead th:nth-child(4){width:9%!important}
-  .items-table thead th:nth-child(5){width:7%!important}
-  .items-table thead th:nth-child(6){width:7%!important}
-  .items-table thead th:nth-child(7){width:7%!important}
-  .items-table thead th:nth-child(8){width:6%!important}
-  .items-table thead th:nth-child(9){width:6%!important}
+  .items-table thead th:nth-child(2){width:34%!important}
+  .items-table thead th:nth-child(3){width:6%!important}
+  .items-table thead th:nth-child(4){width:8%!important}
+  .items-table thead th:nth-child(5){width:6%!important}
+  .items-table thead th:nth-child(6){width:6%!important}
+  .items-table thead th:nth-child(7){width:6%!important}
+  .items-table thead th:nth-child(8){width:5%!important}
+  .items-table thead th:nth-child(9){width:5%!important}
   .items-table thead th:nth-child(10){width:7%!important}
-  .items-table thead th:nth-child(11){width:8%!important}
+  .items-table thead th:nth-child(11){width:14%!important}
   .items-table thead th:nth-child(12){display:none!important}
   .items-table thead th:nth-child(13){display:none!important}
   .items-table tbody td.notes-cell{display:none!important}
@@ -625,7 +649,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
         </div>
         <div class="summary-row">
           <span class="s-label">סה"כ לפני מע"מ</span>
-          <span class="s-value" id="beforeVatVal">₪0</span>
+          <span class="s-value"><span class="s-currency">₪</span><input type="number" id="beforeVatInput" class="s-inline-input" value="0" step="0.01" oninput="onBeforeVatInput()"><span class="s-print-value" id="beforeVatPrint">0</span></span>
         </div>
         <div class="summary-row">
           <span class="s-label">מע"מ (18%)</span>
@@ -634,7 +658,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
         <hr class="summary-divider">
         <div class="summary-row grand">
           <span class="s-label">סה"כ כולל מע"מ</span>
-          <span class="s-value" id="grandTotalVal">₪0</span>
+          <span class="s-value"><span class="s-currency">₪</span><input type="number" id="grandTotalInput" class="s-inline-input s-inline-grand" value="0" step="0.01" oninput="onGrandTotalInput()"><span class="s-print-value" id="grandTotalPrint">0</span></span>
         </div>
       </div>
     </div>
@@ -755,7 +779,7 @@ function saveQuote() {
     title: document.getElementById('metaTitle').value,
     quoteNum: document.getElementById('metaQuoteNum').value,
     date: document.getElementById('metaDate').value,
-    discount: document.getElementById('discountInput').value,
+    discountState: quoteDiscount,
   };
   try { localStorage.setItem(storageQuoteKey(currentUser.name), JSON.stringify(data)); } catch(e) {}
 }
@@ -770,7 +794,15 @@ function loadQuote() {
     document.getElementById('metaTitle').value = data.title || '';
     document.getElementById('metaQuoteNum').value = data.quoteNum || '';
     if (data.date) document.getElementById('metaDate').value = data.date;
-    document.getElementById('discountInput').value = data.discount || 0;
+    // New format (discountState). Fall back to the old flat "discount" field.
+    if (data.discountState && typeof data.discountState === 'object') {
+      quoteDiscount = {
+        source: data.discountState.source || 'pct',
+        value: parseFloat(data.discountState.value) || 0,
+      };
+    } else {
+      quoteDiscount = { source: 'pct', value: parseFloat(data.discount) || 0 };
+    }
   } catch(e) {}
 }
 
@@ -980,42 +1012,105 @@ function renderTable() {
   recalcSummary();
 }
 
+// Single source of truth for the quote discount. One of four inputs is the
+// "live" source at any time, and the other three are recomputed from it so
+// what the user typed is exactly what the quote uses (no rounding drift).
+//   - source 'pct'   : percent off the subtotal (proportional; follows rows)
+//   - source 'ils'   : fixed shekel discount (stays constant as rows change)
+//   - source 'before': target "לפני מע\"מ" total; discount = subtotal - target
+//   - source 'grand' : target "כולל מע\"מ" total; discount = subtotal - target/1.18
+let quoteDiscount = { source: 'pct', value: 0 };
+
+function pgSubtotal() {
+  let s = 0;
+  quoteRows.forEach(row => { s += calcRow(row).total; });
+  return s;
+}
+
+function resolveDiscountAmount(subtotal) {
+  const { source, value } = quoteDiscount;
+  let d = 0;
+  if (source === 'pct')    d = subtotal * (value || 0) / 100;
+  else if (source === 'ils')    d = value || 0;
+  else if (source === 'before') d = subtotal - (value || 0);
+  else if (source === 'grand')  d = subtotal - ((value || 0) / 1.18);
+  if (!isFinite(d) || d < 0) d = 0;
+  if (d > subtotal) d = subtotal;
+  return d;
+}
+
+// Show a number with up to 2 decimals but strip a trailing ".00" so integer
+// amounts still read cleanly — used for the discount display line so a user
+// who typed ₪479.6 sees "₪479.6" and not "₪480".
+function fmtMoney(n) {
+  if (!isFinite(n)) return '0';
+  const r2 = Math.round(n * 100) / 100;
+  if (Math.abs(r2 - Math.round(r2)) < 0.005) return Math.round(r2).toLocaleString('he-IL');
+  return r2.toLocaleString('he-IL', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function onDiscountPctInput() {
+  const v = parseFloat(document.getElementById('discountInput').value);
+  quoteDiscount = { source: 'pct', value: isFinite(v) ? v : 0 };
+  recalcSummary();
+}
+function onDiscountILSInput() {
+  const v = parseFloat(document.getElementById('discountInputILS').value);
+  quoteDiscount = { source: 'ils', value: isFinite(v) ? v : 0 };
+  recalcSummary();
+}
+function onBeforeVatInput() {
+  const v = parseFloat(document.getElementById('beforeVatInput').value);
+  quoteDiscount = { source: 'before', value: isFinite(v) ? v : 0 };
+  recalcSummary();
+}
+function onGrandTotalInput() {
+  const v = parseFloat(document.getElementById('grandTotalInput').value);
+  quoteDiscount = { source: 'grand', value: isFinite(v) ? v : 0 };
+  recalcSummary();
+}
+
 function recalcSummary() {
-  let totalSqm=0, subtotal=0;
-  quoteRows.forEach(row => { const c=calcRow(row); totalSqm+=c.sqm; subtotal+=c.total; });
-  const disc = parseFloat(document.getElementById('discountInput').value) || 0;
-  const discountAmt = subtotal * disc / 100;
+  let totalSqm = 0, subtotal = 0;
+  quoteRows.forEach(row => { const c = calcRow(row); totalSqm += c.sqm; subtotal += c.total; });
+
+  const discountAmt = resolveDiscountAmount(subtotal);
   const afterDisc = subtotal - discountAmt;
   const vat = afterDisc * 0.18;
   const grand = afterDisc + vat;
+  const pct = subtotal > 0 ? (discountAmt / subtotal) * 100 : 0;
+
+  // Static spans — always update.
   document.getElementById('totalSqm').textContent = totalSqm.toFixed(2);
-  document.getElementById('subtotalVal').textContent = '₪'+fmt(subtotal);
-  document.getElementById('discountVal').textContent = disc > 0 ? '-₪'+fmt(discountAmt) : '₪0';
-  document.getElementById('beforeVatVal').textContent = '₪'+fmt(afterDisc);
-  document.getElementById('vatVal').textContent = '₪'+fmt(vat);
-  document.getElementById('grandTotalVal').textContent = '₪'+fmt(grand);
-  // Keep the ILS mirror of the discount in sync, unless the user is
-  // actively typing in that field (don't fight their cursor).
-  const ilsEl = document.getElementById('discountInputILS');
-  if (ilsEl && document.activeElement !== ilsEl) {
-    ilsEl.value = Math.round(discountAmt);
-  }
+  document.getElementById('subtotalVal').textContent = '₪' + fmtMoney(subtotal);
+  document.getElementById('discountVal').textContent = discountAmt > 0 ? '-₪' + fmtMoney(discountAmt) : '₪0';
+  document.getElementById('vatVal').textContent = '₪' + fmtMoney(vat);
+
+  // Live inputs — update unless the user is actively typing into that exact
+  // field, otherwise we'd fight their cursor. Each non-active input mirrors
+  // the value derived from the current source-of-truth.
+  const active = document.activeElement;
+  const pctEl    = document.getElementById('discountInput');
+  const ilsEl    = document.getElementById('discountInputILS');
+  const beforeEl = document.getElementById('beforeVatInput');
+  const grandEl  = document.getElementById('grandTotalInput');
+
+  if (active !== pctEl)    pctEl.value    = pct === 0 ? '0' : String(Math.round(pct * 100) / 100);
+  if (active !== ilsEl)    ilsEl.value    = discountAmt === 0 ? '0' : String(Math.round(discountAmt * 100) / 100);
+  if (active !== beforeEl) beforeEl.value = String(Math.round(afterDisc * 100) / 100);
+  if (active !== grandEl)  grandEl.value  = String(Math.round(grand * 100) / 100);
+
+  // Print mirrors — display-only spans used in place of the inputs in print
+  // so totals show with thousand separators and the same fmtMoney treatment
+  // as every other summary line.
+  document.getElementById('beforeVatPrint').textContent = fmtMoney(afterDisc);
+  document.getElementById('grandTotalPrint').textContent = fmtMoney(grand);
+
+  // Tag the discount row so print can skip it when there's no discount.
+  const discRow = document.querySelector('.summary-row.discount');
+  if (discRow) discRow.classList.toggle('is-zero', !(discountAmt > 0));
+
   saveQuote();
-}
-
-// User edited the "%" box — % is already the source of truth, just recalc.
-function onDiscountPctInput() { recalcSummary(); }
-
-// User edited the "₪" box — convert to %, drive recalcSummary off that.
-function onDiscountILSInput() {
-  const ils = parseFloat(document.getElementById('discountInputILS').value) || 0;
-  let subtotal = 0;
-  quoteRows.forEach(row => { subtotal += calcRow(row).total; });
-  let pct = subtotal > 0 ? (ils / subtotal) * 100 : 0;
-  if (pct > 100) pct = 100;
-  if (pct < 0) pct = 0;
-  document.getElementById('discountInput').value = Math.round(pct * 100) / 100;
-  recalcSummary();
 }
 
 function deleteRow(idx) { quoteRows.splice(idx,1); renderTable(); saveQuote(); }
@@ -1032,9 +1127,7 @@ function clearAll() {
   quoteRows = [];
   document.getElementById('metaTitle').value = '';
   document.getElementById('metaQuoteNum').value = '';
-  document.getElementById('discountInput').value = 0;
-  const ilsEl = document.getElementById('discountInputILS');
-  if (ilsEl) ilsEl.value = 0;
+  quoteDiscount = { source: 'pct', value: 0 };
   renderTable();
   saveQuote();
 }
@@ -1479,7 +1572,7 @@ function runPriceGen() {
   if (quoteRows.length && !confirm('הפעולה תחליף את ההצעה הנוכחית. להמשיך?')) return;
 
   quoteRows = result.rows;
-  document.getElementById('discountInput').value = result.discountPct || 0;
+  quoteDiscount = { source: 'pct', value: result.discountPct || 0 };
   closePriceGen();
   renderTable();
   saveQuote();
@@ -1676,7 +1769,7 @@ function runPdfGen() {
   if (quoteRows.length && !confirm('הפעולה תחליף את ההצעה הנוכחית. להמשיך?')) return;
 
   quoteRows = result.rows;
-  document.getElementById('discountInput').value = result.discountPct || 0;
+  quoteDiscount = { source: 'pct', value: result.discountPct || 0 };
   if (pdfExtracted.title) document.getElementById('metaTitle').value = pdfExtracted.title;
   if (pdfExtracted.quoteNum) document.getElementById('metaQuoteNum').value = pdfExtracted.quoteNum;
   closeUploadModal();
