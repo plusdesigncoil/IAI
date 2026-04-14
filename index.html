@@ -456,6 +456,12 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   }
   .quote-meta .meta-value input::placeholder{color:transparent!important}
   .quote-meta .meta-value input[type="date"]{font-size:10px!important}
+  /* Chrome/Safari render a calendar picker indicator on date inputs — it
+     leaks into the print because the default UA styles apply. Hide both
+     the picker button and any inner spin widgets. */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="date"]::-webkit-clear-button{display:none!important;-webkit-appearance:none!important}
   .quote-meta .user-badge{
     background:transparent!important;padding:0!important;color:#000!important;
     font-weight:700!important;font-size:10.5px!important;border-radius:0!important;
@@ -468,19 +474,21 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .items-table thead th{padding:4px 3px!important;font-size:8px!important;line-height:1.15!important;white-space:normal!important;border-bottom-width:1.5px!important}
   /* Explicit percentage column widths that sum to 100% — "פרטים" gets the
      widest slice. No "auto" column so table-layout:fixed has zero ambiguity
-     and the table always fills the full printable width. */
-  .items-table thead th:nth-child(1){width:3%!important}
-  .items-table thead th:nth-child(2){width:34%!important}
-  .items-table thead th:nth-child(3){width:6%!important}
-  .items-table thead th:nth-child(4){width:8%!important}
-  .items-table thead th:nth-child(5){width:6%!important}
+     and the table always fills the full printable width. Column 1 is the
+     row-actions cell (hidden in print) and column 13 is the הערות cell
+     (also hidden in print, as notes are rendered inline under the name). */
+  .items-table thead th:nth-child(1){display:none!important}
+  .items-table thead th:nth-child(2){width:3%!important}
+  .items-table thead th:nth-child(3){width:34%!important}
+  .items-table thead th:nth-child(4){width:6%!important}
+  .items-table thead th:nth-child(5){width:8%!important}
   .items-table thead th:nth-child(6){width:6%!important}
   .items-table thead th:nth-child(7){width:6%!important}
-  .items-table thead th:nth-child(8){width:5%!important}
+  .items-table thead th:nth-child(8){width:6%!important}
   .items-table thead th:nth-child(9){width:5%!important}
-  .items-table thead th:nth-child(10){width:7%!important}
-  .items-table thead th:nth-child(11){width:14%!important}
-  .items-table thead th:nth-child(12){display:none!important}
+  .items-table thead th:nth-child(10){width:5%!important}
+  .items-table thead th:nth-child(11){width:7%!important}
+  .items-table thead th:nth-child(12){width:14%!important}
   .items-table thead th:nth-child(13){display:none!important}
   .items-table tbody td.notes-cell{display:none!important}
   .items-table .item-name-notes{display:block!important;font-size:7.5px!important;color:#666!important;font-weight:400!important;margin-top:1px!important;line-height:1.2!important}
@@ -500,7 +508,17 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .items-table tbody td.row-num{display:table-cell!important;text-align:center!important;width:22px!important;color:#888!important}
   .items-table tbody td.item-name{display:table-cell!important;font-size:9px!important;font-weight:600!important;padding:3px 4px!important;margin:0!important;border:none!important;border-bottom:1px solid #eee!important;max-width:none!important;line-height:1.2!important;word-wrap:break-word!important}
   .items-table .contract-badge{font-size:8px!important;padding:0 4px!important;font-weight:700!important}
-  .items-table .total-cell{font-weight:700!important}
+  /* All money cells render in plain black for print — the green
+     "total" colour is only useful on screen. */
+  .items-table .total-cell,
+  .items-table .money,
+  .items-table td.money,
+  .items-table td.total-cell{color:#000!important;font-weight:700!important}
+  /* The סה"כ column aligns to the LEFT edge of the page in print — the
+     table is RTL, so the last HTML column is the leftmost one visually.
+     We force text-align left on it and add a little right padding. */
+  .items-table td.total-cell,
+  .items-table th:nth-child(12){text-align:left!important;padding-left:6px!important}
   .items-table .notes-cell{font-size:8px!important;color:#888!important}
   .items-table tbody tr{page-break-inside:avoid}
   .company-header,.quote-meta{page-break-after:avoid}
@@ -637,6 +655,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
       <table class="items-table">
         <thead>
           <tr>
+            <th class="no-print" style="width:90px"></th>
             <th class="num" style="width:30px">#</th>
             <th>פרטים</th>
             <th class="num" style="width:65px">סעיף בחוזה</th>
@@ -649,7 +668,6 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
             <th class="num" style="width:70px">מחיר</th>
             <th class="num" style="width:80px">סה"כ</th>
             <th style="width:90px">הערות</th>
-            <th class="no-print" style="width:90px"></th>
           </tr>
         </thead>
         <tbody id="itemsBody"></tbody>
@@ -1051,6 +1069,11 @@ function renderTable() {
       : '';
     const qtyCell = `<input class="cell-input" type="number" min="0" step="1" value="${escAttr(row.qty||'')}" oninput="inlineEdit(${i},'qty',this.value)">`;
     return `<tr>
+      <td class="no-print row-actions-cell"><div class="row-actions">
+        <button class="row-btn" title="ערוך בפופ-אפ" onclick="editRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="row-btn" title="שכפל" onclick="duplicateRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="del-btn" title="מחק" onclick="deleteRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div></td>
       <td class="row-num" data-label="#">${i+1}</td>
       <td class="item-name"><span class="item-name-title">${row.product.name}</span>${row.notes ? `<span class="item-name-notes">${escAttr(row.notes)}</span>` : ''}</td>
       <td class="num-cell" data-label="סעיף"><span class="contract-badge">${row.product.contract}</span></td>
@@ -1063,11 +1086,6 @@ function renderTable() {
       <td class="num-cell money" data-label="מחיר"><span class="row-unit">${c.total > 0 ? fmt(c.unitPrice) : ''}</span></td>
       <td class="num-cell total-cell" data-label='סה"כ'><span class="row-total">${c.total > 0 ? fmt(c.total) : ''}</span></td>
       <td class="notes-cell" data-label="הערות">${row.notes || ''}</td>
-      <td class="no-print row-actions-cell"><div class="row-actions">
-        <button class="row-btn" title="ערוך בפופ-אפ" onclick="editRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="row-btn" title="שכפל" onclick="duplicateRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <button class="del-btn" title="מחק" onclick="deleteRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-      </div></td>
     </tr>`;
   }).join('');
   recalcSummary();
@@ -1743,8 +1761,10 @@ function runPriceGen() {
 
   if (quoteRows.length && !confirm('הפעולה תחליף את ההצעה הנוכחית. להמשיך?')) return;
 
+  // Pin the pre-VAT total to the exact user target so the grand
+  // lands on the intended amount regardless of row dimension drift.
   quoteRows = result.rows;
-  quoteDiscount = { source: 'pct', value: result.discountPct || 0 };
+  quoteDiscount = { source: 'before', value: target };
   closePriceGen();
   renderTable();
   saveQuote();
@@ -2105,40 +2125,48 @@ function buildPdfReplacementQuote(data) {
   }
 
   // ── Refinement pass: nudge the biggest row's width so the product
-  //    subtotal hits productBudget exactly. Dimension discretisation
-  //    means each row drifts a few ₪ — without this step the drift can
-  //    accumulate into hundreds on a long quote. We keep qty fixed and
-  //    adjust the width of the single largest sqm row. ──
-  const refine = () => {
-    let sum = 0;
-    productRows.forEach(r => { sum += calcRow(r).total; });
-    const drift = productBudget - sum;
-    if (Math.abs(drift) < 1) return;
-    let target = null, targetTotal = -Infinity;
-    for (const r of productRows) {
-      if (r.product.type !== 'sqm') continue;
-      const t = calcRow(r).total;
-      if (t > targetTotal) { target = r; targetTotal = t; }
+  //    subtotal lands *just above* productBudget. We deliberately
+  //    over-shoot by a small buffer so the 'grand' source discount
+  //    applied later can clamp the total to the exact target — if the
+  //    sum ever fell below the target, the discount would clamp to 0
+  //    and we'd undershoot. The loop runs up to 4 times to converge
+  //    after each width clamp. ──
+  const TARGET_BUFFER = 5;           // ₪, safety overshoot
+  const refine = (iterations = 4) => {
+    for (let i = 0; i < iterations; i++) {
+      let sum = 0;
+      productRows.forEach(r => { sum += calcRow(r).total; });
+      const drift = (productBudget + TARGET_BUFFER) - sum;
+      if (drift < 0.5 && drift >= -TARGET_BUFFER) return;  // already in range
+      let target = null, targetTotal = -Infinity;
+      for (const r of productRows) {
+        if (r.product.type !== 'sqm') continue;
+        const t = calcRow(r).total;
+        if (t > targetTotal) { target = r; targetTotal = t; }
+      }
+      if (!target) return;
+      const h = parseFloat(target.height) || 50;
+      const q = parseFloat(target.qty) || 1;
+      const wanted = targetTotal + drift;
+      if (wanted <= 0) return;
+      // Solve for width given the locked height × qty, ceil so we round
+      // UP — we'd rather be a shekel too high and have the discount
+      // trim it than a shekel too low and miss the target.
+      const newAreaM2 = wanted / target.product.price;
+      let newW = Math.ceil(newAreaM2 * 10000 / (h * q));
+      newW = Math.max(10, Math.min(5000, newW));
+      target.width = String(newW);
     }
-    if (!target) return;
-    const h = parseFloat(target.height) || 50;
-    const q = parseFloat(target.qty) || 1;
-    const wanted = targetTotal + drift;
-    if (wanted <= 0) return;
-    // Solve for width given the locked height × qty: width = area ÷ q / h
-    const newAreaM2 = wanted / target.product.price;
-    let newW = Math.round(newAreaM2 * 10000 / (h * q));
-    newW = Math.max(10, Math.min(3000, newW));
-    target.width = String(newW);
   };
   refine();
 
   const rows = [...productRows, ...tailRows];
   let subtotal = 0;
   rows.forEach(r => { subtotal += calcRow(r).total; });
-  const discountILS = Math.max(0, subtotal - netTarget);
-  const discountPct = subtotal > 0 ? Math.round((discountILS / subtotal) * 10000) / 100 : 0;
-  return { rows, subtotal, discountILS, discountPct };
+  // The caller will pin the grand total to `grossTarget` via a
+  // source='grand' discount, so the displayed grand always hits the
+  // PDF's exact gross to the cent.
+  return { rows, subtotal, netTarget, grossTarget: data.gross };
 }
 
 function runPdfGen() {
@@ -2166,7 +2194,21 @@ function runPdfGen() {
   if (quoteRows.length && !confirm('הפעולה תחליף את ההצעה הנוכחית. להמשיך?')) return;
 
   quoteRows = result.rows;
-  quoteDiscount = { source: 'pct', value: result.discountPct || 0 };
+  // Pin the grand total to the PDF's exact gross via a source='grand'
+  // discount. The refinement pass guarantees the row sum is slightly
+  // above the target, so the 'grand' source can always clamp down to
+  // the exact cent — no percent-rounding drift.
+  if (result.grossTarget != null && result.grossTarget > 0) {
+    quoteDiscount = { source: 'grand', value: result.grossTarget };
+  } else {
+    quoteDiscount = { source: 'pct', value: result.discountPct || 0 };
+  }
+  // If the PDF's net carried a fractional part (i.e. the source PDF
+  // itself applied rounding, like 28,270.34), switch rounding on so we
+  // mirror that behaviour and the grand total reads as a whole ₪.
+  if (result.netTarget != null && Math.abs(result.netTarget - Math.round(result.netTarget)) >= 0.005) {
+    roundPrices = true;
+  }
   if (pdfExtracted.title) document.getElementById('metaTitle').value = pdfExtracted.title;
   if (pdfExtracted.quoteNum) document.getElementById('metaQuoteNum').value = pdfExtracted.quoteNum;
   closeUploadModal();
