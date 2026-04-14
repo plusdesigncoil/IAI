@@ -137,6 +137,8 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .items-table tbody tr:nth-child(even):hover td{background:var(--gray-100)}
 .items-table .row-num{text-align:center;color:var(--gray-400);font-weight:600;width:30px}
 .items-table .item-name{font-weight:500;max-width:200px}
+.items-table .item-name-title{display:block}
+.items-table .item-name-notes{display:none}
 .items-table .contract-badge{
   display:inline-block;background:var(--blue-light);color:var(--blue-dark);
   font-weight:700;font-size:11px;padding:1px 7px;border-radius:3px;
@@ -415,20 +417,23 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .items-table{display:table!important;width:100%!important;background:transparent!important;table-layout:fixed!important;font-size:8.5px!important}
   .items-table thead{display:table-header-group!important}
   .items-table thead th{padding:4px 3px!important;font-size:8px!important;line-height:1.15!important;white-space:normal!important;border-bottom-width:1.5px!important}
-  /* Percentage column widths: פרטים gets the lion's share (~28%), numeric cols are narrow */
+  /* Percentage column widths: פרטים gets the lion's share, numeric cols are narrow,
+     notes column (12) is hidden and the notes render inline under the item name. */
   .items-table thead th:nth-child(1){width:3%!important}
   .items-table thead th:nth-child(2){width:auto!important}
-  .items-table thead th:nth-child(3){width:6%!important}
-  .items-table thead th:nth-child(4){width:8%!important}
-  .items-table thead th:nth-child(5){width:6%!important}
-  .items-table thead th:nth-child(6){width:6%!important}
-  .items-table thead th:nth-child(7){width:6%!important}
-  .items-table thead th:nth-child(8){width:5%!important}
-  .items-table thead th:nth-child(9){width:5.5%!important}
-  .items-table thead th:nth-child(10){width:6%!important}
-  .items-table thead th:nth-child(11){width:7%!important}
-  .items-table thead th:nth-child(12){width:10%!important}
+  .items-table thead th:nth-child(3){width:7%!important}
+  .items-table thead th:nth-child(4){width:9%!important}
+  .items-table thead th:nth-child(5){width:7%!important}
+  .items-table thead th:nth-child(6){width:7%!important}
+  .items-table thead th:nth-child(7){width:7%!important}
+  .items-table thead th:nth-child(8){width:6%!important}
+  .items-table thead th:nth-child(9){width:6%!important}
+  .items-table thead th:nth-child(10){width:7%!important}
+  .items-table thead th:nth-child(11){width:8%!important}
+  .items-table thead th:nth-child(12){display:none!important}
   .items-table thead th:nth-child(13){display:none!important}
+  .items-table tbody td.notes-cell{display:none!important}
+  .items-table .item-name-notes{display:block!important;font-size:7.5px!important;color:#666!important;font-weight:400!important;margin-top:1px!important;line-height:1.2!important}
 
   .items-table tbody{display:table-row-group!important}
   .items-table tr{display:table-row!important;background:transparent!important;border:none!important;margin:0!important;padding:0!important;box-shadow:none!important}
@@ -947,7 +952,7 @@ function renderTable() {
     const sqmCell = c.sqm > 0 ? c.sqm.toFixed(2) : (row.product.type==='fixed'?'0':'');
     return `<tr>
       <td class="row-num" data-label="#">${i+1}</td>
-      <td class="item-name">${row.product.name}</td>
+      <td class="item-name"><span class="item-name-title">${row.product.name}</span>${row.notes ? `<span class="item-name-notes">${escAttr(row.notes)}</span>` : ''}</td>
       <td class="num-cell" data-label="סעיף"><span class="contract-badge">${row.product.contract}</span></td>
       <td data-label="יחידה">${row.product.unit}</td>
       <td class="num-cell money" data-label="מחיר יח׳">${fmt(row.product.price)}</td>
@@ -994,7 +999,15 @@ function editRow(idx) {
   pendingProduct = row.product;
   openDetailModal({ qty: row.qty, height: row.height, width: row.width, notes: row.notes });
 }
-function clearAll() { if(quoteRows.length&&!confirm('לנקות את כל השורות?'))return; quoteRows=[]; renderTable(); saveQuote(); }
+function clearAll() {
+  if (quoteRows.length && !confirm('לנקות את כל השורות?')) return;
+  quoteRows = [];
+  document.getElementById('metaTitle').value = '';
+  document.getElementById('metaQuoteNum').value = '';
+  document.getElementById('discountInput').value = 0;
+  renderTable();
+  saveQuote();
+}
 
 function doPrint() {
   const titleInput = document.getElementById('metaTitle');
@@ -1120,11 +1133,22 @@ function confirmAddProduct() {
 // ── Price Generator ──
 const PG_MAX_DISCOUNT_ILS = 500;
 const PG_SQM_HEIGHTS = [50, 60, 80, 100, 120, 150, 200];
-// Categories excluded from the random pool (user request: no "מתקני תצוגה").
-const PG_EXCLUDED_CATEGORIES = new Set(['רולאפים']);
-// Individual items excluded from the random pool either because they are
-// always added manually (installer day / design hours) or because they
-// conflict with the "prefer full installer day" rule (min-install items).
+// Categories excluded from the random filler pool:
+//   - רולאפים / מתקני תצוגה: user request, never auto-generate.
+//   - עיצוב גרפי / אספקה / התקנה: contain the design-hours and installer-day
+//     items which we always append manually at the end of the quote, so we
+//     don't want the filler to add a second installation/design item.
+const PG_EXCLUDED_CATEGORIES = new Set(['רולאפים', 'עיצוב גרפי', 'אספקה / התקנה']);
+// Per-category row cap for categories that should appear at most N times.
+// Letter-based categories ("לוגו / אותיות" and "שילוט מואר") also share a
+// combined cap so we don't end up with three different letter items.
+const PG_CATEGORY_CAPS = {
+  'לוגו / אותיות': 1,
+  'שילוט מואר': 1,
+};
+const PG_LETTER_GROUP = new Set(['לוגו / אותיות', 'שילוט מואר']);
+// Individual items excluded from the random pool because they are added
+// manually or conflict with "prefer full installer day".
 const PG_EXCLUDED_NAMES = new Set([
   'מינימום התקנה - מתקין 1 (עד שעתיים)',
   'מינימום התקנה - 2 מתקינים (עד שעתיים)',
@@ -1132,6 +1156,8 @@ const PG_EXCLUDED_NAMES = new Set([
   'יום עבודה - 2 מתקינים (8.5 שעות)',
   'שעות עיצוב',
 ]);
+// Category names that should always appear at the end of the quote.
+const PG_TAIL_CATEGORIES = new Set(['אספקה / התקנה', 'עיצוב גרפי']);
 
 function pgFindItem(name) {
   for (const cat of PRODUCTS) {
@@ -1190,13 +1216,15 @@ function pgTryGenerate(netTarget, maxDiscountILS, minRows, attempts, mega = fals
   const fracMin = mega ? 0.2 : 0.15;
   const fracMax = mega ? 0.6 : 0.35;
 
+  // Catalog pool is paired with each item's category so we can cap counts
+  // per category.
   const catalog = [];
   PRODUCTS.forEach(cat => {
     if (PG_EXCLUDED_CATEGORIES.has(cat.cat)) return;
     cat.items.forEach(it => {
       if (PG_EXCLUDED_NAMES.has(it.name)) return;
       if (it.price > maxSingleItemPrice) return;
-      catalog.push(it);
+      catalog.push({ it, cat: cat.cat });
     });
   });
   if (!catalog.length) return null;
@@ -1204,42 +1232,50 @@ function pgTryGenerate(netTarget, maxDiscountILS, minRows, attempts, mega = fals
   const rand = (min, max) => min + Math.random() * (max - min);
 
   for (let attempt = 0; attempt < attempts; attempt++) {
-    const rows = [];
+    const productRows = [];   // real catalog products (shown first)
+    const tailRows = [];      // design + installer (shown last)
     let sum = 0;
     const usedNames = new Set();
+    const catCounts = {};
+    let letterGroupCount = 0;
 
-    // Step 1: design hours (always prefer to include)
+    // Decide up-front which "tail" rows we'll add and reserve their cost so
+    // the filler doesn't overshoot. We still push them to `tailRows` only
+    // after the filler, so in the final output they appear at the end.
+    let tailPending = [];
     if (designHours && netTarget >= 400) {
       const maxHours = Math.min(5, Math.max(1, Math.round(netTarget / 2000)));
       const hours = 1 + Math.floor(Math.random() * maxHours);
       const total = designHours.price * hours;
-      if (total <= netTarget * 0.25 && sum + total <= netTarget + maxDiscountILS) {
-        rows.push({ product: designHours, height: '', width: '', qty: String(hours), notes: '' });
+      if (total <= netTarget * 0.25) {
+        tailPending.push({ product: designHours, height: '', width: '', qty: String(hours), notes: '', _total: total });
         sum += total;
         usedNames.add(designHours.name);
       }
     }
-
-    // Step 2: full installer day (1 or 2 installers)
     if (installer1 && netTarget >= 1800) {
       let installer = installer1;
-      if (installer2 && netTarget >= 5000 && Math.random() < 0.4) {
-        installer = installer2;
-      }
+      if (installer2 && netTarget >= 5000 && Math.random() < 0.4) installer = installer2;
       if (sum + installer.price + 300 <= netTarget + maxDiscountILS) {
-        rows.push({ product: installer, height: '', width: '', qty: '1', notes: '' });
+        tailPending.push({ product: installer, height: '', width: '', qty: '1', notes: '', _total: installer.price });
         sum += installer.price;
         usedNames.add(installer.name);
       }
     }
 
-    // Step 3: fill with small rows
+    // Filler: real catalog products chosen randomly.
     const pool = [...catalog].sort(() => Math.random() - 0.5);
-
-    for (const it of pool) {
-      if (rows.length >= maxRows) break;
-      if (sum >= netTarget && rows.length >= minRows) break;
+    for (const { it, cat } of pool) {
+      if (productRows.length + tailPending.length >= maxRows) break;
+      if (sum >= netTarget && productRows.length + tailPending.length >= minRows) break;
       if (usedNames.has(it.name)) continue;
+
+      // Per-category caps (e.g. max 1 letter/logo item).
+      const cap = PG_CATEGORY_CAPS[cat];
+      if (cap !== undefined && (catCounts[cat] || 0) >= cap) continue;
+      // Shared cap across the "letter" categories so we don't accumulate
+      // multiple letter-based rows from different sub-categories.
+      if (PG_LETTER_GROUP.has(cat) && letterGroupCount >= 1) continue;
 
       const remaining = Math.max(1, netTarget - sum);
       let rowTotal = 0, height = '', width = '', qty = '1';
@@ -1277,10 +1313,20 @@ function pgTryGenerate(netTarget, maxDiscountILS, minRows, attempts, mega = fals
       }
 
       if (rowTotal <= 0) continue;
-      rows.push({ product: it, height, width, qty, notes: '' });
+      productRows.push({ product: it, height, width, qty, notes: '' });
       sum += rowTotal;
       usedNames.add(it.name);
+      catCounts[cat] = (catCounts[cat] || 0) + 1;
+      if (PG_LETTER_GROUP.has(cat)) letterGroupCount++;
     }
+
+    // Flush the tail rows now that filler is done. Order: products → installer → design.
+    tailPending.sort((a, b) => {
+      const aIsDesign = a.product === designHours ? 1 : 0;
+      const bIsDesign = b.product === designHours ? 1 : 0;
+      return aIsDesign - bIsDesign;
+    });
+    const rows = [...productRows, ...tailPending.map(r => { const { _total, ...rest } = r; return rest; })];
 
     if (rows.length >= minRows && sum >= netTarget && sum <= netTarget + maxDiscountILS) {
       const discountILS = sum - netTarget;
@@ -1429,21 +1475,45 @@ async function handlePdfUpload(event) {
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      // PDF.js emits each Hebrew glyph as a separate item in x-coordinate
-      // order (left→right). For RTL pages we need to group items into lines
-      // by their y-coordinate and then sort each line x-descending so the
-      // Hebrew characters line up in logical reading order.
-      const lines = new Map();
+      // PDF.js emits each Hebrew glyph as its own item, keyed by x-coordinate.
+      // Group items into lines by their y-coordinate, sort each line x-descending
+      // for right-to-left reading, then strip the unreliable " " items PDF.js
+      // inserts and re-insert spaces by detecting x-gaps that are noticeably
+      // wider than the median character advance on that line.
+      const linesMap = new Map();
       for (const item of content.items) {
         if (!item.str) continue;
         const y = Math.round(item.transform[5]);
-        if (!lines.has(y)) lines.set(y, []);
-        lines.get(y).push(item);
+        if (!linesMap.has(y)) linesMap.set(y, []);
+        linesMap.get(y).push(item);
       }
-      const ys = [...lines.keys()].sort((a, b) => b - a);
+      const ys = [...linesMap.keys()].sort((a, b) => b - a);
       for (const y of ys) {
-        const line = lines.get(y).sort((a, b) => b.transform[4] - a.transform[4]);
-        text += line.map(it => it.str).join('') + '\n';
+        const chars = linesMap.get(y)
+          .filter(it => it.str && it.str.trim() !== '')
+          .sort((a, b) => b.transform[4] - a.transform[4]);
+        if (!chars.length) continue;
+
+        // Compute advances (gap between consecutive characters) to pick a
+        // word-boundary threshold. Median * 1.25 works well for Senzey PDFs;
+        // we clamp to a floor of 8 so short lines still get sensible breaks.
+        const advances = [];
+        for (let j = 1; j < chars.length; j++) {
+          advances.push(chars[j - 1].transform[4] - chars[j].transform[4]);
+        }
+        const sorted = [...advances].sort((a, b) => a - b);
+        const median = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 7;
+        const threshold = Math.max(8, median * 1.25);
+
+        let lineText = '';
+        for (let j = 0; j < chars.length; j++) {
+          if (j > 0) {
+            const gap = chars[j - 1].transform[4] - chars[j].transform[4];
+            if (gap > threshold) lineText += ' ';
+          }
+          lineText += chars[j].str;
+        }
+        text += lineText + '\n';
       }
     }
 
