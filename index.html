@@ -1231,6 +1231,13 @@ function recalcSummary() {
   } else {
     roundRow.style.display = 'none';
   }
+  // The toggle row itself is only useful when the raw grand total has a
+  // fractional part (= something to round). When the total is already a
+  // round integer, hide the toggle so it stops cluttering the summary.
+  const rawGrand = afterDisc * 1.18;
+  const hasFractional = Math.abs(rawGrand - Math.round(rawGrand)) >= 0.005;
+  const toggleRow = document.querySelector('.round-toggle-row');
+  if (toggleRow) toggleRow.style.display = hasFractional ? '' : 'none';
 
   // Live inputs — update unless the user is actively typing into that exact
   // field, otherwise we'd fight their cursor. Each non-active input mirrors
@@ -1933,9 +1940,13 @@ function extractQuoteData(rawText) {
     if (leading.length >= 2) { height = leading[leading.length - 2]; width = leading[leading.length - 1]; }
     else if (leading.length === 1) { width = leading[0]; }
 
-    // Classify
-    const isInstall = /התקנ|מתקי|אספק.*התקנ/.test(rest);
-    const isDesign = /עיצוב/.test(rest) && !isInstall;
+    // Classify based on the HEAD of the Hebrew item name only. A feature
+    // description like "...לצורך התקנה + צביעה..." should NOT flag the
+    // row as an installation, so we require the installation/design
+    // keyword to be in the opening portion of the name.
+    const head = rest.slice(0, 40);
+    const isInstall = /^\s*(אספקה\s*ו?ה?תקנ|התקנ|מינימ.*התקנ|יום\s*עבוד.*מתקי|מתקינ|מתקין)/.test(head);
+    const isDesign = !isInstall && /^\s*(עיצוב|שעות\s*עיצוב)/.test(head);
     const item = { total, unitPrice, qty, width, height, raw: rest };
     if (isInstall)      installations.push(item);
     else if (isDesign)  designs.push(item);
@@ -2037,6 +2048,10 @@ function buildPdfReplacementQuote(data) {
   const usedNames = new Set();
   let allocated = 0;
 
+  // Qty choices weighted toward small numbers but with occasional larger
+  // counts, so quotes look realistic instead of always "1 giant sticker".
+  const QTY_OPTIONS = [1, 1, 1, 2, 2, 3, 3, 4, 5, 6, 8, 10, 10, 12, 15, 20];
+
   for (let i = 0; i < productCount; i++) {
     // Either use the weighted slice or (for the last row) whatever budget
     // is left so the sum exactly matches productBudget.
@@ -2051,30 +2066,54 @@ function buildPdfReplacementQuote(data) {
     const item = candidates[Math.floor(Math.random() * candidates.length)];
     usedNames.add(item.name);
 
-    // Compute dimensions to hit the chunk total with qty=1. Step = 1 ס"מ
-    // for better precision, clamped to [10, 3000] so small chunks don't
-    // overshoot and large ones aren't capped.
+    // Pick dimensions + qty so the row looks natural. We bias the qty
+    // bucket by chunk size (small chunk → qty 1-3, big chunk → qty up to
+    // 30) and then derive the per-unit width from the chunk, so a row
+    // reads like "15 stickers of 120×180 ס"מ" instead of "1 sticker of
+    // 150×3000 ס"מ". Widths stay in [20..800] ס"מ where possible.
     const h = PG_SQM_HEIGHTS[Math.floor(Math.random() * PG_SQM_HEIGHTS.length)];
-    const areaM2 = chunk / item.price;
-    let w = Math.round(areaM2 * 10000 / h);
+    const qtyBuckets = [
+      { max: 500,      pool: [1, 1, 1, 2] },
+      { max: 2000,     pool: [1, 2, 2, 3, 4] },
+      { max: 6000,     pool: [2, 3, 4, 5, 6, 8, 10] },
+      { max: 15000,    pool: [3, 5, 8, 10, 12, 15, 20] },
+      { max: Infinity, pool: [5, 8, 10, 12, 15, 20, 25, 30] },
+    ];
+    const bucket = qtyBuckets.find(b => chunk <= b.max) || qtyBuckets[qtyBuckets.length - 1];
+    let qty = bucket.pool[Math.floor(Math.random() * bucket.pool.length)];
+    const computeW = (q) => {
+      const unitArea = (chunk / q) / item.price;
+      return Math.round(unitArea * 10000 / h);
+    };
+    let w = computeW(qty);
+    // Nudge qty so w lands inside [20..600] ס"מ when possible. We allow
+    // qty to grow up to 50 before giving up — a cheap product against a
+    // big chunk needs many units so the widths stay human-sized.
+    let safety = 0;
+    while ((w < 20 || w > 600) && safety < 15) {
+      if (w < 20) qty = Math.max(1, qty - 1);
+      else        qty = Math.min(50, qty + Math.max(1, Math.ceil(qty * 0.3)));
+      if (qty >= 50 && w > 600) break;
+      w = computeW(qty);
+      safety++;
+    }
     w = Math.max(10, Math.min(3000, w));
-    const rowTotal = item.price * (h * w / 10000);
+    const rowTotal = item.price * (h * w / 10000) * qty;
     allocated += rowTotal;
 
-    productRows.push({ product: item, height: String(h), width: String(w), qty: '1', notes: '' });
+    productRows.push({ product: item, height: String(h), width: String(w), qty: String(qty), notes: '' });
   }
 
   // ── Refinement pass: nudge the biggest row's width so the product
   //    subtotal hits productBudget exactly. Dimension discretisation
   //    means each row drifts a few ₪ — without this step the drift can
-  //    accumulate into hundreds on a long quote. ──
+  //    accumulate into hundreds on a long quote. We keep qty fixed and
+  //    adjust the width of the single largest sqm row. ──
   const refine = () => {
     let sum = 0;
     productRows.forEach(r => { sum += calcRow(r).total; });
     const drift = productBudget - sum;
     if (Math.abs(drift) < 1) return;
-    // Pick the row with the largest currentTotal so the adjustment has
-    // enough headroom to be fractional (in ס"מ).
     let target = null, targetTotal = -Infinity;
     for (const r of productRows) {
       if (r.product.type !== 'sqm') continue;
@@ -2083,10 +2122,12 @@ function buildPdfReplacementQuote(data) {
     }
     if (!target) return;
     const h = parseFloat(target.height) || 50;
+    const q = parseFloat(target.qty) || 1;
     const wanted = targetTotal + drift;
     if (wanted <= 0) return;
+    // Solve for width given the locked height × qty: width = area ÷ q / h
     const newAreaM2 = wanted / target.product.price;
-    let newW = Math.round(newAreaM2 * 10000 / h);
+    let newW = Math.round(newAreaM2 * 10000 / (h * q));
     newW = Math.max(10, Math.min(3000, newW));
     target.width = String(newW);
   };
