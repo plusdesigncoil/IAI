@@ -1015,6 +1015,25 @@ function confirmAddProduct() {
 // ── Price Generator ──
 const PG_MAX_DISCOUNT_ILS = 500;
 const PG_SQM_HEIGHTS = [50, 60, 80, 100, 120, 150, 200];
+// Categories excluded from the random pool (user request: no "מתקני תצוגה").
+const PG_EXCLUDED_CATEGORIES = new Set(['רולאפים']);
+// Individual items excluded from the random pool either because they are
+// always added manually (installer day / design hours) or because they
+// conflict with the "prefer full installer day" rule (min-install items).
+const PG_EXCLUDED_NAMES = new Set([
+  'מינימום התקנה - מתקין 1 (עד שעתיים)',
+  'מינימום התקנה - 2 מתקינים (עד שעתיים)',
+  'יום עבודה - מתקין 1 (8.5 שעות)',
+  'יום עבודה - 2 מתקינים (8.5 שעות)',
+  'שעות עיצוב',
+]);
+
+function pgFindItem(name) {
+  for (const cat of PRODUCTS) {
+    for (const it of cat.items) if (it.name === name) return it;
+  }
+  return null;
+}
 
 function openPriceGen() {
   document.getElementById('priceGenModal').style.display='flex';
@@ -1033,25 +1052,73 @@ function updatePgPreview() {
 // Attempts to build a quote of catalog rows whose subtotal (before VAT) is
 // within [netTarget, netTarget + PG_MAX_DISCOUNT_ILS]; the gap is then applied
 // as a discount percent so the final "לפני מע\"מ" lands exactly on netTarget.
+//
+// Generation rules (per user request):
+//   1. Always prefer to include a full installer day (1 or 2 installers).
+//   2. Always include design hours in every generation.
+//   3. Never include "מתקני תצוגה" (rollups) or the 2-hour mini-installs.
+//   4. Spread across more, cheaper rows rather than few expensive rows.
 function generateByPrice(netTarget) {
   if (!isFinite(netTarget) || netTarget < 50) return null;
+
+  const installer1 = pgFindItem('יום עבודה - מתקין 1 (8.5 שעות)');
+  const installer2 = pgFindItem('יום עבודה - 2 מתקינים (8.5 שעות)');
+  const designHours = pgFindItem('שעות עיצוב');
+
+  // Filler catalog: skip excluded categories / names and skip items that
+  // would dominate the budget (> 45% of target) so the quote spreads out.
+  const maxSingleItemPrice = Math.max(netTarget * 0.45, 250);
   const catalog = [];
-  PRODUCTS.forEach(cat => cat.items.forEach(it => catalog.push(it)));
+  PRODUCTS.forEach(cat => {
+    if (PG_EXCLUDED_CATEGORIES.has(cat.cat)) return;
+    cat.items.forEach(it => {
+      if (PG_EXCLUDED_NAMES.has(it.name)) return;
+      if (it.price > maxSingleItemPrice) return;
+      catalog.push(it);
+    });
+  });
   if (!catalog.length) return null;
 
   const rand = (min, max) => min + Math.random() * (max - min);
 
-  for (let attempt = 0; attempt < 400; attempt++) {
+  for (let attempt = 0; attempt < 500; attempt++) {
     const rows = [];
     let sum = 0;
     const usedNames = new Set();
-    // Pool: skip items whose base price blows past the budget.
-    const pool = catalog
-      .filter(it => it.price <= netTarget + PG_MAX_DISCOUNT_ILS)
-      .sort(() => Math.random() - 0.5);
+
+    // ── Step 1: design hours (always, if any realistic room) ──
+    if (designHours && netTarget >= 400) {
+      const maxHours = Math.min(5, Math.max(1, Math.round(netTarget / 2000)));
+      const hours = 1 + Math.floor(Math.random() * maxHours);
+      const total = designHours.price * hours;
+      // Cap design at ~20% of budget so it doesn't crowd out real products.
+      if (total <= netTarget * 0.25 && sum + total <= netTarget) {
+        rows.push({ product: designHours, height: '', width: '', qty: String(hours), notes: '' });
+        sum += total;
+        usedNames.add(designHours.name);
+      }
+    }
+
+    // ── Step 2: installer day (prefer full day, 1 or 2 installers) ──
+    if (installer1 && netTarget >= 1800) {
+      // Pick 2-installer day only when there is real room for it + extra rows.
+      let installer = installer1;
+      if (installer2 && netTarget >= 5000 && Math.random() < 0.4) {
+        installer = installer2;
+      }
+      // Leave at least ₪300 for filler so we still get extra rows.
+      if (sum + installer.price + 300 <= netTarget + PG_MAX_DISCOUNT_ILS) {
+        rows.push({ product: installer, height: '', width: '', qty: '1', notes: '' });
+        sum += installer.price;
+        usedNames.add(installer.name);
+      }
+    }
+
+    // ── Step 3: fill the rest with several small rows ──
+    const pool = [...catalog].sort(() => Math.random() - 0.5);
 
     for (const it of pool) {
-      if (rows.length >= 6) break;
+      if (rows.length >= 9) break;
       if (sum >= netTarget) break;
       if (usedNames.has(it.name)) continue;
 
@@ -1059,15 +1126,14 @@ function generateByPrice(netTarget) {
       let rowTotal = 0, height = '', width = '', qty = '1';
 
       if (it.type === 'sqm') {
-        // Aim for 30–90% of the remaining budget in this row.
-        const targetRowPrice = Math.min(remaining + PG_MAX_DISCOUNT_ILS, remaining * rand(0.3, 0.9));
+        // Target a small slice of the remaining budget (15–35%).
+        const targetRowPrice = Math.min(remaining + PG_MAX_DISCOUNT_ILS, remaining * rand(0.15, 0.35));
         const targetArea = targetRowPrice / it.price;
-        if (targetArea < 0.15) continue;
+        if (targetArea < 0.12) continue;
         const h = PG_SQM_HEIGHTS[Math.floor(Math.random() * PG_SQM_HEIGHTS.length)];
         let w = Math.round((targetArea * 10000 / h) / 10) * 10;
-        w = Math.max(30, Math.min(400, w));
+        w = Math.max(30, Math.min(300, w));
         rowTotal = it.price * (h * w / 10000);
-        // If this row would blow the cap, try to shrink width first.
         if (sum + rowTotal > netTarget + PG_MAX_DISCOUNT_ILS) {
           const maxArea = (netTarget + PG_MAX_DISCOUNT_ILS - sum) / it.price;
           w = Math.max(30, Math.floor((maxArea * 10000 / h) / 10) * 10);
@@ -1076,12 +1142,14 @@ function generateByPrice(netTarget) {
         }
         height = String(h); width = String(w);
       } else if (it.type === 'unit') {
-        const targetRowPrice = Math.min(remaining + PG_MAX_DISCOUNT_ILS, remaining * rand(0.4, 1.0));
-        let q = Math.max(1, Math.round(targetRowPrice / it.price));
+        // Prefer low quantities (1–2) to spread across more products.
+        const targetRowPrice = Math.min(remaining + PG_MAX_DISCOUNT_ILS, remaining * rand(0.15, 0.35));
+        let q = Math.max(1, Math.min(2, Math.round(targetRowPrice / it.price)));
         rowTotal = it.price * q;
         if (sum + rowTotal > netTarget + PG_MAX_DISCOUNT_ILS) {
           q = Math.floor((netTarget + PG_MAX_DISCOUNT_ILS - sum) / it.price);
           if (q < 1) continue;
+          q = Math.min(q, 2);
           rowTotal = it.price * q;
         }
         qty = String(q);
@@ -1096,8 +1164,8 @@ function generateByPrice(netTarget) {
       usedNames.add(it.name);
     }
 
-    // Successful if we reached the target and the overshoot fits the discount cap.
-    if (rows.length >= 2 && sum >= netTarget && sum <= netTarget + PG_MAX_DISCOUNT_ILS) {
+    // Successful if we reached the target and the overshoot fits the cap.
+    if (rows.length >= 3 && sum >= netTarget && sum <= netTarget + PG_MAX_DISCOUNT_ILS) {
       const discountILS = sum - netTarget;
       const discountPct = sum > 0 ? Math.round((discountILS / sum) * 10000) / 100 : 0;
       return { rows, subtotal: sum, discountILS, discountPct };
