@@ -429,7 +429,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .required-star{display:none!important}
   .summary-row.discount.is-zero{display:none!important}
-  .s-pct-input{border:none!important;background:transparent!important;padding:0!important;width:auto!important;font-weight:700!important;box-shadow:none!important}
+  .s-pct-input{border:none!important;background:transparent!important;padding:0!important;width:34px!important;font-weight:700!important;box-shadow:none!important;text-align:center!important}
   .s-inline-input{display:none!important}
   .s-print-value{display:inline!important;color:inherit;font-weight:inherit}
 
@@ -468,7 +468,10 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   }
 
   /* ── Items table — percentage widths so it fills the full page width ── */
-  .items-section{padding:0!important;background:transparent!important;width:100%!important}
+  /* The items section shares the same horizontal padding as the header,
+     quote meta and summary so the table's left edge (the סה"כ column in
+     RTL) lines up perfectly with the summary amounts below it. */
+  .items-section{padding:0 20px!important;background:transparent!important;width:100%!important}
   .items-table{display:table!important;width:100%!important;background:transparent!important;table-layout:fixed!important;font-size:8.5px!important;border-collapse:collapse!important;margin:0!important}
   .items-table thead{display:table-header-group!important}
   .items-table thead th{padding:4px 3px!important;font-size:8px!important;line-height:1.15!important;white-space:normal!important;border-bottom-width:1.5px!important}
@@ -538,6 +541,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .summary-row .s-value,
   .summary-row.discount .s-value,
   .summary-row.rounding-row .s-value{color:#000!important}
+  /* Discount row: cluster the הנחה label + percent + ILS amount into a
+     single cluster on the start (right) side of the box. Without this
+     the space-between layout splits them to opposite edges and the
+     amount reads as disconnected from the label. */
+  .summary-row.discount{justify-content:flex-start!important;gap:4px!important}
   .summary-row.grand{font-size:12px!important;padding:5px 0 0!important}
   .summary-row.grand .s-label,
   .summary-row.grand .s-value{color:var(--blue-dark)!important;font-weight:800!important}
@@ -2128,9 +2136,20 @@ function buildPdfReplacementQuote(data) {
       : Math.max(50, productBudget - allocated);
     if (chunk <= 0) chunk = productBudget / productCount;
 
-    // Pick an unused catalog item, respecting priority weights. Falls
-    // back to any catalog item if everything's been used already.
-    let item = pickFromPool(it => !usedNames.has(it.name));
+    // Pick an unused catalog item, respecting priority weights. Filter
+    // out expensive unit-type items whose minimum total (qty=1) would
+    // blow past the chunk — e.g. a ₪6,500 letter sign doesn't belong
+    // in a ₪3,000 row. Falls back to any catalog item if nothing fits.
+    const budgetCap = chunk * 1.2;
+    let item = pickFromPool(it => {
+      if (usedNames.has(it.name)) return false;
+      if (it.type === 'unit' && it.price > budgetCap) return false;
+      return true;
+    });
+    if (!item) item = pickFromPool(it => {
+      if (it.type === 'unit' && it.price > budgetCap) return false;
+      return true;
+    });
     if (!item) item = pickFromPool(() => true);
     if (!item) break;
     usedNames.add(item.name);
