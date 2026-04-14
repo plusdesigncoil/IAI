@@ -213,8 +213,8 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .detail-preview .dp-value{font-weight:700;color:var(--green);font-size:15px}
 .modal-footer{padding:14px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-start;gap:10px}
 
-/* ══ MOBILE (≤ 768px) ══ */
-@media (max-width:768px){
+/* ══ MOBILE (≤ 768px) — screen only so print always uses the desktop layout ══ */
+@media screen and (max-width:768px){
   body{font-size:14px}
 
   /* Login */
@@ -343,8 +343,8 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .detail-preview .dp-value{font-size:17px}
 }
 
-/* ══ SMALL MOBILE (≤ 400px) ══ */
-@media (max-width:400px){
+/* ══ SMALL MOBILE (≤ 400px) — screen only ══ */
+@media screen and (max-width:400px){
   .actions-bar .btn{font-size:12px;padding:9px 10px}
   .items-table tbody tr,
   .items-table tbody tr:nth-child(even){padding:12px}
@@ -352,14 +352,36 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 }
 
 @media print{
-  body{background:#fff}
-  .page-wrap{margin:0;padding:0;max-width:100%}
+  @page{margin:15mm}
+  body{background:#fff;font-size:12px}
+  .page-wrap{margin:0;padding:0;max-width:100%;display:block!important}
   .quote-doc{box-shadow:none;border-radius:0}
-  .actions-bar,.no-print,.del-btn,.login-overlay{display:none!important}
-  .page-wrap{display:block!important}
+  .actions-bar,.no-print,.row-btn,.del-btn,.row-actions,.row-actions-cell,.login-overlay{display:none!important}
   .items-table thead th,.company-header,.items-table tbody tr:nth-child(even) td,
   .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .discount-inline input{border:none;font-weight:700}
+  .discount-inline input{border:none;font-weight:700;background:transparent}
+
+  /* Defensive reset in case a browser leaks the mobile card layout into print */
+  .company-header{flex-direction:row!important;padding:24px 32px 20px!important;align-items:flex-start!important;text-align:initial!important}
+  .company-logo{order:2!important}
+  .company-logo svg{height:55px!important}
+  .company-info{order:1!important;width:auto!important;text-align:right!important;direction:rtl!important;font-size:12px!important}
+  .company-info .company-name{text-align:right!important;font-size:16px!important}
+  .company-info .info-row{justify-content:flex-start!important;flex-wrap:nowrap!important}
+  .quote-meta{grid-template-columns:1fr 1fr!important;padding:20px 32px!important}
+  .items-section{padding:0!important;background:transparent!important}
+  .items-table{display:table!important;width:100%!important;background:transparent!important}
+  .items-table thead{display:table-header-group!important}
+  .items-table tbody{display:table-row-group!important}
+  .items-table tr{display:table-row!important;background:transparent!important;border:none!important;margin:0!important;padding:0!important;box-shadow:none!important}
+  .items-table td{display:table-cell!important;padding:7px 10px!important;border-bottom:1px solid var(--gray-100)!important;text-align:right}
+  .items-table td.num-cell{text-align:center!important}
+  .items-table tbody td::before{content:none!important}
+  .items-table tbody td.row-num{display:table-cell!important;text-align:center!important;width:30px!important}
+  .items-table tbody td.item-name{display:table-cell!important;font-size:12.5px!important;font-weight:500!important;padding:7px 10px!important;margin:0!important;border:none!important;border-bottom:1px solid var(--gray-100)!important;max-width:200px!important}
+  .items-table tbody tr{page-break-inside:avoid}
+  .company-header,.quote-meta{page-break-after:avoid}
+  .summary-section{justify-content:flex-end!important;padding:20px 32px!important}
 }
 </style>
 </head>
@@ -461,6 +483,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
     <!-- Actions -->
     <div class="actions-bar no-print">
       <button class="btn btn-blue" onclick="openProductPicker()">➕ הוסף מוצר</button>
+      <button class="btn btn-outline" onclick="openPriceGen()">✨ ייצר לפי מחיר</button>
       <span class="spacer"></span>
       <button class="btn btn-outline" onclick="doPrint()">🖨️ הדפסה/שמירה</button>
       <button class="btn btn-red btn-sm" onclick="clearAll()">🗑️ נקה</button>
@@ -559,6 +582,39 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
     <div class="modal-footer">
       <button class="btn btn-green" onclick="confirmAddProduct()">✓ הוסף להצעה</button>
       <button class="btn btn-outline" onclick="closeDetailModal()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- Price Generator Modal -->
+<div class="modal-overlay" id="priceGenModal" style="display:none;" onclick="if(event.target===this)closePriceGen()">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3>✨ ייצר הצעה לפי מחיר יעד</h3>
+      <button class="modal-close" onclick="closePriceGen()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-form">
+        <div class="detail-group full">
+          <label>מחיר יעד (₪)</label>
+          <input type="number" id="pgTarget" min="100" step="50" placeholder="למשל: 3000" oninput="updatePgPreview()">
+        </div>
+        <div class="detail-group full">
+          <label>בסיס החישוב</label>
+          <select id="pgBasis" onchange="updatePgPreview()" style="padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:var(--radius);font-family:inherit;font-size:14px;background:var(--white)">
+            <option value="gross">כולל מע"מ (מה שהלקוח משלם)</option>
+            <option value="net">לפני מע"מ</option>
+          </select>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--gray-500);margin-top:14px;line-height:1.6">
+        המערכת תבחר מספר סעיפים מהמחירון בצירוף הקרוב למחיר היעד, ותשלים את ההפרש בהנחה של עד <strong>₪500</strong> לדיוק מלא. ניתן לערוך כל שורה אחרי הייצור.
+      </p>
+      <div id="pgError" style="color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-green" onclick="runPriceGen()">✨ ייצר הצעה</button>
+      <button class="btn btn-outline" onclick="closePriceGen()">ביטול</button>
     </div>
   </div>
 </div>
@@ -956,10 +1012,138 @@ function confirmAddProduct() {
   saveQuote();
 }
 
+// ── Price Generator ──
+const PG_MAX_DISCOUNT_ILS = 500;
+const PG_SQM_HEIGHTS = [50, 60, 80, 100, 120, 150, 200];
+
+function openPriceGen() {
+  document.getElementById('priceGenModal').style.display='flex';
+  document.getElementById('pgTarget').value='';
+  document.getElementById('pgError').textContent='';
+  setTimeout(()=>document.getElementById('pgTarget').focus(), 100);
+}
+function closePriceGen() {
+  document.getElementById('priceGenModal').style.display='none';
+  document.getElementById('pgError').textContent='';
+}
+function updatePgPreview() {
+  document.getElementById('pgError').textContent='';
+}
+
+// Attempts to build a quote of catalog rows whose subtotal (before VAT) is
+// within [netTarget, netTarget + PG_MAX_DISCOUNT_ILS]; the gap is then applied
+// as a discount percent so the final "לפני מע\"מ" lands exactly on netTarget.
+function generateByPrice(netTarget) {
+  if (!isFinite(netTarget) || netTarget < 50) return null;
+  const catalog = [];
+  PRODUCTS.forEach(cat => cat.items.forEach(it => catalog.push(it)));
+  if (!catalog.length) return null;
+
+  const rand = (min, max) => min + Math.random() * (max - min);
+
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const rows = [];
+    let sum = 0;
+    const usedNames = new Set();
+    // Pool: skip items whose base price blows past the budget.
+    const pool = catalog
+      .filter(it => it.price <= netTarget + PG_MAX_DISCOUNT_ILS)
+      .sort(() => Math.random() - 0.5);
+
+    for (const it of pool) {
+      if (rows.length >= 6) break;
+      if (sum >= netTarget) break;
+      if (usedNames.has(it.name)) continue;
+
+      const remaining = netTarget - sum;
+      let rowTotal = 0, height = '', width = '', qty = '1';
+
+      if (it.type === 'sqm') {
+        // Aim for 30–90% of the remaining budget in this row.
+        const targetRowPrice = Math.min(remaining + PG_MAX_DISCOUNT_ILS, remaining * rand(0.3, 0.9));
+        const targetArea = targetRowPrice / it.price;
+        if (targetArea < 0.15) continue;
+        const h = PG_SQM_HEIGHTS[Math.floor(Math.random() * PG_SQM_HEIGHTS.length)];
+        let w = Math.round((targetArea * 10000 / h) / 10) * 10;
+        w = Math.max(30, Math.min(400, w));
+        rowTotal = it.price * (h * w / 10000);
+        // If this row would blow the cap, try to shrink width first.
+        if (sum + rowTotal > netTarget + PG_MAX_DISCOUNT_ILS) {
+          const maxArea = (netTarget + PG_MAX_DISCOUNT_ILS - sum) / it.price;
+          w = Math.max(30, Math.floor((maxArea * 10000 / h) / 10) * 10);
+          rowTotal = it.price * (h * w / 10000);
+          if (w < 30 || rowTotal <= 0) continue;
+        }
+        height = String(h); width = String(w);
+      } else if (it.type === 'unit') {
+        const targetRowPrice = Math.min(remaining + PG_MAX_DISCOUNT_ILS, remaining * rand(0.4, 1.0));
+        let q = Math.max(1, Math.round(targetRowPrice / it.price));
+        rowTotal = it.price * q;
+        if (sum + rowTotal > netTarget + PG_MAX_DISCOUNT_ILS) {
+          q = Math.floor((netTarget + PG_MAX_DISCOUNT_ILS - sum) / it.price);
+          if (q < 1) continue;
+          rowTotal = it.price * q;
+        }
+        qty = String(q);
+      } else { // fixed
+        if (sum + it.price > netTarget + PG_MAX_DISCOUNT_ILS) continue;
+        rowTotal = it.price;
+      }
+
+      if (rowTotal <= 0) continue;
+      rows.push({ product: it, height, width, qty, notes: '' });
+      sum += rowTotal;
+      usedNames.add(it.name);
+    }
+
+    // Successful if we reached the target and the overshoot fits the discount cap.
+    if (rows.length >= 2 && sum >= netTarget && sum <= netTarget + PG_MAX_DISCOUNT_ILS) {
+      const discountILS = sum - netTarget;
+      const discountPct = sum > 0 ? Math.round((discountILS / sum) * 10000) / 100 : 0;
+      return { rows, subtotal: sum, discountILS, discountPct };
+    }
+  }
+  return null;
+}
+
+function runPriceGen() {
+  const targetInput = document.getElementById('pgTarget');
+  const err = document.getElementById('pgError');
+  const basis = document.getElementById('pgBasis').value;
+  err.textContent = '';
+
+  const raw = parseFloat(targetInput.value);
+  if (!raw || raw < 100) {
+    err.textContent = 'הזן מחיר יעד תקין (לפחות ₪100)';
+    return;
+  }
+
+  // Convert to "before VAT" since the quote math and discount both run on net.
+  const netTarget = basis === 'gross' ? raw / 1.18 : raw;
+
+  const result = generateByPrice(netTarget);
+  if (!result) {
+    err.textContent = 'לא הצלחתי להרכיב הצעה לסכום הזה. נסה מחיר אחר.';
+    return;
+  }
+
+  if (quoteRows.length && !confirm('הפעולה תחליף את ההצעה הנוכחית. להמשיך?')) return;
+
+  quoteRows = result.rows;
+  document.getElementById('discountInput').value = result.discountPct || 0;
+  closePriceGen();
+  renderTable();
+  saveQuote();
+}
+
 document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&document.getElementById('detailModal').style.display==='flex'){e.preventDefault();confirmAddProduct()}
+  if(e.key==='Enter'){
+    if(document.getElementById('detailModal').style.display==='flex'){e.preventDefault();confirmAddProduct();return}
+    if(document.getElementById('priceGenModal').style.display==='flex'){e.preventDefault();runPriceGen();return}
+  }
   if(e.key==='Escape'){
     if(document.getElementById('detailModal').style.display==='flex')closeDetailModal();
+    else if(document.getElementById('priceGenModal').style.display==='flex')closePriceGen();
     else if(document.getElementById('pickerModal').style.display==='flex')closeModal();
   }
 });
