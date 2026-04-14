@@ -66,16 +66,16 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 /* Company Header — LTR aligned (left side) */
 .company-header{
   display:flex;justify-content:space-between;align-items:flex-start;
-  padding:24px 32px 20px;border-bottom:3px solid var(--blue);
+  padding:30px 36px 26px;border-bottom:3px solid var(--blue);
 }
 .company-logo{flex-shrink:0;order:2}
-.company-logo svg{height:55px;width:auto}
-.company-info{text-align:right;direction:rtl;line-height:1.7;font-size:12px;color:var(--gray-700);order:1}
-.company-info .company-name{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:2px;direction:rtl;text-align:right}
+.company-logo svg{height:80px;width:auto}
+.company-info{text-align:right;direction:rtl;line-height:1.75;font-size:13.5px;color:var(--gray-700);order:1}
+.company-info .company-name{font-size:20px;font-weight:800;color:var(--ink);margin-bottom:4px;direction:rtl;text-align:right}
 .company-info .company-name span{color:var(--gray-400);font-weight:400}
-.company-info .info-row{display:flex;align-items:center;gap:6px;justify-content:flex-start}
-.company-info .info-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;color:var(--blue);flex-shrink:0}
-.company-info .info-icon svg{width:12px;height:12px}
+.company-info .info-row{display:flex;align-items:center;gap:7px;justify-content:flex-start}
+.company-info .info-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;color:var(--blue);flex-shrink:0}
+.company-info .info-icon svg{width:14px;height:14px}
 
 /* Quote Meta */
 .quote-meta{padding:20px 32px;display:grid;grid-template-columns:1fr 1fr;gap:12px 40px;border-bottom:1px solid var(--gray-200)}
@@ -149,6 +149,20 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .items-table .money{font-weight:600;white-space:nowrap}
 .items-table .total-cell{font-weight:700;color:var(--green)}
 .items-table .notes-cell{font-size:11.5px;color:var(--gray-500);max-width:100px}
+/* Inline-editable cell inputs (height / width / qty) — subtle affordance
+   so users know the cell is editable, stronger border on focus. */
+.items-table .cell-input{
+  width:54px;padding:3px 5px;
+  border:1px solid var(--gray-200);border-radius:4px;
+  background:var(--gray-50);font-family:inherit;font-size:12px;
+  text-align:center;color:inherit;
+  -moz-appearance:textfield;
+}
+.items-table .cell-input::-webkit-outer-spin-button,
+.items-table .cell-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.items-table .cell-input:hover{border-color:var(--gray-400);background:#fff}
+.items-table .cell-input:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 2px rgba(68,130,196,.15)}
+.items-table .cell-fixed{color:var(--gray-500);font-size:12px}
 .items-table .row-actions{display:flex;gap:2px;justify-content:center;white-space:nowrap}
 .items-table .row-btn,.items-table .del-btn{
   background:none;border:none;color:var(--gray-400);cursor:pointer;
@@ -202,6 +216,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .s-print-value{display:none}
 .summary-row.discount.is-zero .s-neg,
 .summary-row.discount.is-zero .s-currency{display:none}
+/* Round toggle row — subtle, screen only. */
+.round-toggle-row{padding-top:2px!important;padding-bottom:2px!important}
+.round-toggle-label{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--gray-500);cursor:pointer;user-select:none}
+.round-toggle-label input{margin:0;cursor:pointer}
+.summary-row.rounding-row .s-value{color:var(--gray-500);font-weight:500}
 
 /* Modal */
 .modal-overlay{
@@ -415,12 +434,14 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .s-print-value{display:inline!important;color:inherit;font-weight:inherit}
 
   /* ── Company header ── */
-  .company-header{flex-direction:row!important;padding:12px 20px 10px!important;align-items:flex-start!important;text-align:initial!important;border-bottom-width:2px!important}
+  .company-header{flex-direction:row!important;padding:14px 22px 12px!important;align-items:flex-start!important;text-align:initial!important;border-bottom-width:2px!important}
   .company-logo{order:2!important}
-  .company-logo svg{height:38px!important}
-  .company-info{order:1!important;width:auto!important;text-align:right!important;direction:rtl!important;font-size:9px!important;line-height:1.4!important}
-  .company-info .company-name{text-align:right!important;font-size:12.5px!important;margin-bottom:2px!important}
+  .company-logo svg{height:54px!important}
+  .company-info{order:1!important;width:auto!important;text-align:right!important;direction:rtl!important;font-size:10.5px!important;line-height:1.5!important}
+  .company-info .company-name{text-align:right!important;font-size:15px!important;margin-bottom:3px!important}
   .company-info .info-row{justify-content:flex-start!important;flex-wrap:nowrap!important;margin-bottom:0!important}
+  .company-info .info-icon{width:13px!important;height:13px!important}
+  .company-info .info-icon svg{width:11px!important;height:11px!important}
 
   /* ── Quote meta — technical, no underlines, no pill badges ── */
   .quote-meta{grid-template-columns:1fr 1fr!important;padding:10px 20px!important;gap:2px 30px!important;border-bottom:1px solid #ccc!important}
@@ -469,6 +490,13 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .items-table td{display:table-cell!important;padding:3px 2px!important;border-bottom:1px solid #eee!important;text-align:right;font-size:8.5px!important;line-height:1.2!important;vertical-align:middle!important;word-wrap:break-word!important;overflow-wrap:break-word!important}
   .items-table td.num-cell{text-align:center!important;white-space:nowrap!important}
   .items-table tbody td::before{content:none!important}
+  /* Inline-editable cell inputs render as plain text in print (no border,
+     no background) so the printed table looks identical to a static one. */
+  .items-table .cell-input{
+    border:none!important;background:transparent!important;padding:0!important;
+    box-shadow:none!important;width:auto!important;font-size:8.5px!important;
+    text-align:center!important;
+  }
   .items-table tbody td.row-num{display:table-cell!important;text-align:center!important;width:22px!important;color:#888!important}
   .items-table tbody td.item-name{display:table-cell!important;font-size:9px!important;font-weight:600!important;padding:3px 4px!important;margin:0!important;border:none!important;border-bottom:1px solid #eee!important;max-width:none!important;line-height:1.2!important;word-wrap:break-word!important}
   .items-table .contract-badge{font-size:8px!important;padding:0 4px!important;font-weight:700!important}
@@ -477,11 +505,17 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .items-table tbody tr{page-break-inside:avoid}
   .company-header,.quote-meta{page-break-after:avoid}
 
-  /* ── Summary — compact ── */
+  /* ── Summary — compact, black text on all rows except the grand total ── */
   .summary-section{justify-content:flex-end!important;padding:10px 20px 14px!important;gap:0!important;border-top:1.5px solid #000!important}
   .summary-box{min-width:230px!important}
   .summary-row{padding:2px 0!important;font-size:10px!important}
+  .summary-row .s-label,
+  .summary-row .s-value,
+  .summary-row.discount .s-value,
+  .summary-row.rounding-row .s-value{color:#000!important}
   .summary-row.grand{font-size:12px!important;padding:5px 0 0!important}
+  .summary-row.grand .s-label,
+  .summary-row.grand .s-value{color:var(--blue-dark)!important;font-weight:800!important}
   .summary-divider{margin:4px 0!important}
 }
 </style>
@@ -639,15 +673,22 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
         </div>
         <div class="summary-row discount">
           <span class="s-label">
-            הנחה <input type="number" id="discountInput" class="s-pct-input" value="0" min="0" max="100" step="0.1" oninput="onDiscountPctInput()"> %
+            הנחה <input type="text" inputmode="decimal" id="discountInput" class="s-pct-input" value="0" onfocus="onInlineFocus(event)" onblur="onInlineBlur(event)" oninput="onDiscountPctInput()"> %
           </span>
           <span class="s-value">
-            <span class="s-neg">-</span><span class="s-currency">₪</span><input type="number" id="discountInputILS" class="s-inline-input" value="0" step="0.01" oninput="onDiscountILSInput()"><span class="s-print-value" id="discountPrint">0</span>
+            <span class="s-neg">-</span><span class="s-currency">₪</span><input type="text" inputmode="decimal" id="discountInputILS" class="s-inline-input" value="0" onfocus="onInlineFocus(event)" onblur="onInlineBlur(event)" oninput="onDiscountILSInput()"><span class="s-print-value" id="discountPrint">0</span>
           </span>
         </div>
         <div class="summary-row">
           <span class="s-label">סה"כ לפני מע"מ</span>
-          <span class="s-value"><span class="s-currency">₪</span><input type="number" id="beforeVatInput" class="s-inline-input" value="0" step="0.01" oninput="onBeforeVatInput()"><span class="s-print-value" id="beforeVatPrint">0</span></span>
+          <span class="s-value"><span class="s-currency">₪</span><input type="text" inputmode="decimal" id="beforeVatInput" class="s-inline-input" value="0" onfocus="onInlineFocus(event)" onblur="onInlineBlur(event)" oninput="onBeforeVatInput()"><span class="s-print-value" id="beforeVatPrint">0</span></span>
+        </div>
+        <div class="summary-row round-toggle-row no-print">
+          <label class="round-toggle-label"><input type="checkbox" id="roundToggle" onchange="onRoundToggle()"> עיגול מחירים</label>
+        </div>
+        <div class="summary-row rounding-row" id="roundingRow" style="display:none">
+          <span class="s-label">עיגול</span>
+          <span class="s-value"><span class="s-currency">₪</span><span id="roundingVal">0</span></span>
         </div>
         <div class="summary-row">
           <span class="s-label">מע"מ (18%)</span>
@@ -656,7 +697,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
         <hr class="summary-divider">
         <div class="summary-row grand">
           <span class="s-label">סה"כ כולל מע"מ</span>
-          <span class="s-value"><span class="s-currency">₪</span><input type="number" id="grandTotalInput" class="s-inline-input s-inline-grand" value="0" step="0.01" oninput="onGrandTotalInput()"><span class="s-print-value" id="grandTotalPrint">0</span></span>
+          <span class="s-value"><span class="s-currency">₪</span><input type="text" inputmode="decimal" id="grandTotalInput" class="s-inline-input s-inline-grand" value="0" onfocus="onInlineFocus(event)" onblur="onInlineBlur(event)" oninput="onGrandTotalInput()"><span class="s-print-value" id="grandTotalPrint">0</span></span>
         </div>
       </div>
     </div>
@@ -778,6 +819,7 @@ function saveQuote() {
     quoteNum: document.getElementById('metaQuoteNum').value,
     date: document.getElementById('metaDate').value,
     discountState: quoteDiscount,
+    roundPrices,
   };
   try { localStorage.setItem(storageQuoteKey(currentUser.name), JSON.stringify(data)); } catch(e) {}
 }
@@ -801,6 +843,7 @@ function loadQuote() {
     } else {
       quoteDiscount = { source: 'pct', value: parseFloat(data.discount) || 0 };
     }
+    roundPrices = !!data.roundPrices;
   } catch(e) {}
 }
 
@@ -904,8 +947,9 @@ const PRODUCTS = [
     { name:"הדפסה על OSB עובי 12 מ\"מ", contract:12, unit:'מ"ר', price:48923, type:"sqm" },
     { name:"הדפסה על זכוכית כולל מרחיקי ניקל, גב אטום, גימור ליטוש יהלום וחיסום", contract:10, unit:'מ"ר', price:48329, type:"sqm" },
     { name:"הדפסה על פרספקס 5 מ\"מ", contract:11, unit:'מ"ר', price:48329, type:"sqm" },
-    { name:"מגן קיר פרספקס שקוף", contract:33, unit:"1X0.2 מטר", price:48821, type:"unit" },
-    { name:"תוספת הדפסה למגן קיר", contract:34, unit:"1X0.2 מטר", price:48861, type:"unit" },
+    // length-type: height is fixed at 20 ס"מ, price is per running meter
+    { name:"מגן קיר פרספקס שקוף", contract:33, unit:'מ"א (גובה 20 ס"מ)', price:48821, type:"length" },
+    { name:"תוספת הדפסה למגן קיר", contract:34, unit:'מ"א (גובה 20 ס"מ)', price:48861, type:"length" },
   ]},
   { cat:"בדים", items:[
     { name:"הדפסה על שמשונית (כולל גימור וטבעות)", contract:7, unit:'מ"ר', price:48861, type:"sqm" },
@@ -971,9 +1015,15 @@ function calcRow(row) {
     const sqm = (h * w / 10000) * q;
     const unitPrice = p.price * (h * w / 10000);
     return { sqm, unitPrice, total: p.price * sqm };
-  } else {
-    return { sqm: 0, unitPrice: p.price, total: p.price * q };
   }
+  if (p.type === 'length') {
+    // Fixed 20 ס"מ height; `width` stores the running length in ס"מ.
+    // Price is per running meter, total = price × (length/100) × qty.
+    const lengthM = w / 100;
+    const unitPrice = p.price * lengthM;
+    return { sqm: (20 * w / 10000) * q, unitPrice, total: unitPrice * q };
+  }
+  return { sqm: 0, unitPrice: p.price, total: p.price * q };
 }
 
 function renderTable() {
@@ -986,28 +1036,62 @@ function renderTable() {
   tbody.innerHTML = quoteRows.map((row, i) => {
     const c = calcRow(row);
     const isSqm = row.product.type === 'sqm';
+    const isLength = row.product.type === 'length';
+    const hasSize = isSqm || isLength;
     const sqmCell = c.sqm > 0 ? c.sqm.toFixed(2) : (row.product.type==='fixed'?'0':'');
+    // Inline-editable cells for height/width/qty/notes. Height is read-only
+    // for length-type (fixed 20 ס"מ). Non-sized products hide the size cells.
+    const heightCell = isSqm
+      ? `<input class="cell-input" type="number" min="0" step="1" value="${escAttr(row.height||'')}" oninput="inlineEdit(${i},'height',this.value)">`
+      : isLength
+        ? `<span class="cell-fixed">20</span>`
+        : '';
+    const widthCell = hasSize
+      ? `<input class="cell-input" type="number" min="0" step="1" value="${escAttr(row.width||'')}" oninput="inlineEdit(${i},'width',this.value)">`
+      : '';
+    const qtyCell = `<input class="cell-input" type="number" min="0" step="1" value="${escAttr(row.qty||'')}" oninput="inlineEdit(${i},'qty',this.value)">`;
     return `<tr>
       <td class="row-num" data-label="#">${i+1}</td>
       <td class="item-name"><span class="item-name-title">${row.product.name}</span>${row.notes ? `<span class="item-name-notes">${escAttr(row.notes)}</span>` : ''}</td>
       <td class="num-cell" data-label="סעיף"><span class="contract-badge">${row.product.contract}</span></td>
       <td data-label="יחידה">${row.product.unit}</td>
       <td class="num-cell money" data-label="מחיר יח׳">${fmt(row.product.price)}</td>
-      <td class="num-cell" data-label='גובה (ס"מ)'>${isSqm && row.height ? row.height : ''}</td>
-      <td class="num-cell" data-label='רוחב (ס"מ)'>${isSqm && row.width ? row.width : ''}</td>
-      <td class="num-cell" data-label="כמות">${row.qty || ''}</td>
-      <td class="num-cell" data-label='מ"ר'>${sqmCell}</td>
-      <td class="num-cell money" data-label="מחיר">${c.total > 0 ? fmt(c.unitPrice) : ''}</td>
-      <td class="num-cell total-cell" data-label='סה"כ'>${c.total > 0 ? fmt(c.total) : ''}</td>
+      <td class="num-cell" data-label='גובה (ס"מ)'>${heightCell}</td>
+      <td class="num-cell" data-label='רוחב (ס"מ)'>${widthCell}</td>
+      <td class="num-cell" data-label="כמות">${qtyCell}</td>
+      <td class="num-cell" data-label='מ"ר'><span class="row-sqm">${sqmCell}</span></td>
+      <td class="num-cell money" data-label="מחיר"><span class="row-unit">${c.total > 0 ? fmt(c.unitPrice) : ''}</span></td>
+      <td class="num-cell total-cell" data-label='סה"כ'><span class="row-total">${c.total > 0 ? fmt(c.total) : ''}</span></td>
       <td class="notes-cell" data-label="הערות">${row.notes || ''}</td>
       <td class="no-print row-actions-cell"><div class="row-actions">
-        <button class="row-btn" title="ערוך" onclick="editRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="row-btn" title="ערוך בפופ-אפ" onclick="editRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="row-btn" title="שכפל" onclick="duplicateRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         <button class="del-btn" title="מחק" onclick="deleteRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div></td>
     </tr>`;
   }).join('');
   recalcSummary();
+}
+
+// Inline editing handler — updates the row state, recomputes only this
+// row's displayed cells (sqm / unit price / total) and refreshes the
+// summary, without re-rendering the whole table (so the user's focus and
+// cursor position survive each keystroke).
+function inlineEdit(idx, field, value) {
+  if (!quoteRows[idx]) return;
+  quoteRows[idx][field] = value;
+  const tr = document.querySelectorAll('#itemsBody tr')[idx];
+  if (tr) {
+    const c = calcRow(quoteRows[idx]);
+    const sqmEl = tr.querySelector('.row-sqm');
+    const unitEl = tr.querySelector('.row-unit');
+    const totalEl = tr.querySelector('.row-total');
+    if (sqmEl)   sqmEl.textContent   = c.sqm > 0 ? c.sqm.toFixed(2) : (quoteRows[idx].product.type==='fixed'?'0':'');
+    if (unitEl)  unitEl.textContent  = c.total > 0 ? fmt(c.unitPrice) : '';
+    if (totalEl) totalEl.textContent = c.total > 0 ? fmt(c.total) : '';
+  }
+  recalcSummary();
+  saveQuote();
 }
 
 // Single source of truth for the quote discount. One of four inputs is the
@@ -1018,6 +1102,7 @@ function renderTable() {
 //   - source 'before': target "לפני מע\"מ" total; discount = subtotal - target
 //   - source 'grand' : target "כולל מע\"מ" total; discount = subtotal - target/1.18
 let quoteDiscount = { source: 'pct', value: 0 };
+let roundPrices = false;
 
 function pgSubtotal() {
   let s = 0;
@@ -1047,25 +1132,79 @@ function fmtMoney(n) {
   return r2.toLocaleString('he-IL', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
+// Permissive number parse for comma-formatted text inputs. Strips thousand
+// separators and LTR/RTL marks so "12,345.6" or "1,234" both resolve to the
+// numeric value the user meant.
+function parseInputValue(str) {
+  if (str == null) return 0;
+  const clean = String(str).replace(/[,\s\u200E\u200F\u00A0]/g, '').trim();
+  if (!clean) return 0;
+  const n = parseFloat(clean);
+  return isFinite(n) ? n : 0;
+}
+
+// Focus/blur handlers for the summary inputs. On focus we expose the raw
+// numeric value so the user can edit it without fighting the commas; on
+// blur we re-apply the thousand-separator formatting. During typing the
+// input keeps whatever text the user is entering — we never re-format mid
+// keystroke or we'd eat the cursor.
+function onInlineFocus(ev) {
+  const el = ev.target;
+  const n = parseInputValue(el.value);
+  el.value = n === 0 ? '' : String(Math.round(n * 100) / 100);
+  if (el.select) el.select();
+}
+function onInlineBlur(ev) {
+  const el = ev.target;
+  const n = parseInputValue(el.value);
+  el.value = n === 0 ? '0' : fmtMoney(n);
+}
+
 function onDiscountPctInput() {
-  const v = parseFloat(document.getElementById('discountInput').value);
-  quoteDiscount = { source: 'pct', value: isFinite(v) ? v : 0 };
+  const v = parseInputValue(document.getElementById('discountInput').value);
+  quoteDiscount = { source: 'pct', value: v };
   recalcSummary();
 }
 function onDiscountILSInput() {
-  const v = parseFloat(document.getElementById('discountInputILS').value);
-  quoteDiscount = { source: 'ils', value: isFinite(v) ? v : 0 };
+  const v = parseInputValue(document.getElementById('discountInputILS').value);
+  quoteDiscount = { source: 'ils', value: v };
   recalcSummary();
 }
 function onBeforeVatInput() {
-  const v = parseFloat(document.getElementById('beforeVatInput').value);
-  quoteDiscount = { source: 'before', value: isFinite(v) ? v : 0 };
+  const v = parseInputValue(document.getElementById('beforeVatInput').value);
+  quoteDiscount = { source: 'before', value: v };
   recalcSummary();
 }
 function onGrandTotalInput() {
-  const v = parseFloat(document.getElementById('grandTotalInput').value);
-  quoteDiscount = { source: 'grand', value: isFinite(v) ? v : 0 };
+  const v = parseInputValue(document.getElementById('grandTotalInput').value);
+  quoteDiscount = { source: 'grand', value: v };
   recalcSummary();
+}
+function onRoundToggle() {
+  roundPrices = !!document.getElementById('roundToggle').checked;
+  recalcSummary();
+}
+
+// Given the "after discount, before VAT" amount, apply optional grand-total
+// rounding. When enabled, the grand total (incl. VAT) is ceiled to an
+// integer and the pre-VAT and VAT values are back-calculated so all three
+// figures add up exactly. The delta returned tells the summary row how much
+// was added to the pre-VAT figure to reach the rounded total.
+function applyRounding(afterDisc) {
+  const rawVat = afterDisc * 0.18;
+  const rawGrand = afterDisc + rawVat;
+  if (!roundPrices) {
+    return { preVat: afterDisc, preVatDelta: 0, vat: rawVat, grand: rawGrand };
+  }
+  const grandCeil = Math.ceil(rawGrand - 1e-9);  // avoid ceiling an already-integer due to float error
+  const newPreVat = Math.round((grandCeil / 1.18) * 100) / 100;
+  const newVat = Math.round((grandCeil - newPreVat) * 100) / 100;
+  return {
+    preVat: newPreVat,
+    preVatDelta: newPreVat - afterDisc,
+    vat: newVat,
+    grand: grandCeil,
+  };
 }
 
 function recalcSummary() {
@@ -1074,8 +1213,8 @@ function recalcSummary() {
 
   const discountAmt = resolveDiscountAmount(subtotal);
   const afterDisc = subtotal - discountAmt;
-  const vat = afterDisc * 0.18;
-  const grand = afterDisc + vat;
+  const r = applyRounding(afterDisc);
+  const { preVat, preVatDelta, vat, grand } = r;
   const pct = subtotal > 0 ? (discountAmt / subtotal) * 100 : 0;
 
   // Static spans — always update.
@@ -1083,9 +1222,20 @@ function recalcSummary() {
   document.getElementById('subtotalVal').textContent = '₪' + fmtMoney(subtotal);
   document.getElementById('vatVal').textContent = '₪' + fmtMoney(vat);
 
+  // Rounding row: visible only when the toggle is on AND there's a real delta.
+  const roundRow = document.getElementById('roundingRow');
+  const roundVal = document.getElementById('roundingVal');
+  if (roundPrices && Math.abs(preVatDelta) >= 0.005) {
+    roundRow.style.display = '';
+    roundVal.textContent = fmtMoney(preVatDelta);
+  } else {
+    roundRow.style.display = 'none';
+  }
+
   // Live inputs — update unless the user is actively typing into that exact
   // field, otherwise we'd fight their cursor. Each non-active input mirrors
-  // the value derived from the current source-of-truth.
+  // the value derived from the current source-of-truth, formatted with
+  // commas for readability.
   const active = document.activeElement;
   const pctEl    = document.getElementById('discountInput');
   const ilsEl    = document.getElementById('discountInputILS');
@@ -1093,16 +1243,20 @@ function recalcSummary() {
   const grandEl  = document.getElementById('grandTotalInput');
 
   if (active !== pctEl)    pctEl.value    = pct === 0 ? '0' : String(Math.round(pct * 100) / 100);
-  if (active !== ilsEl)    ilsEl.value    = discountAmt === 0 ? '0' : String(Math.round(discountAmt * 100) / 100);
-  if (active !== beforeEl) beforeEl.value = String(Math.round(afterDisc * 100) / 100);
-  if (active !== grandEl)  grandEl.value  = String(Math.round(grand * 100) / 100);
+  if (active !== ilsEl)    ilsEl.value    = fmtMoney(discountAmt);
+  if (active !== beforeEl) beforeEl.value = fmtMoney(preVat);
+  if (active !== grandEl)  grandEl.value  = fmtMoney(grand);
 
   // Print mirrors — display-only spans used in place of the inputs in print
   // so totals show with thousand separators and the same fmtMoney treatment
   // as every other summary line.
   document.getElementById('discountPrint').textContent = fmtMoney(discountAmt);
-  document.getElementById('beforeVatPrint').textContent = fmtMoney(afterDisc);
+  document.getElementById('beforeVatPrint').textContent = fmtMoney(preVat);
   document.getElementById('grandTotalPrint').textContent = fmtMoney(grand);
+
+  // Keep the toggle in sync with state (important after loadQuote restores it).
+  const toggle = document.getElementById('roundToggle');
+  if (toggle) toggle.checked = roundPrices;
 
   // Tag the discount row so print can skip it when there's no discount.
   const discRow = document.querySelector('.summary-row.discount');
@@ -1126,6 +1280,9 @@ function clearAll() {
   document.getElementById('metaTitle').value = '';
   document.getElementById('metaQuoteNum').value = '';
   quoteDiscount = { source: 'pct', value: 0 };
+  roundPrices = false;
+  const toggle = document.getElementById('roundToggle');
+  if (toggle) toggle.checked = false;
   renderTable();
   saveQuote();
 }
@@ -1215,28 +1372,35 @@ function openDetailModal(initial) {
   const isEditing = editingIndex != null;
   document.getElementById('detailTitle').textContent = (isEditing ? 'ערוך — ' : '') + p.name;
   const isSqm=p.type==='sqm';
+  const isLength=p.type==='length';
   const qtyVal = init.qty != null && init.qty !== '' ? init.qty : 1;
-  const heightVal = init.height != null ? init.height : '';
+  const heightVal = init.height != null ? init.height : (isLength ? '20' : '');
   const widthVal = init.width != null ? init.width : '';
   const notesVal = init.notes != null ? init.notes : '';
   document.getElementById('detailForm').innerHTML=`
     <div class="detail-group"><label>סעיף בחוזה</label><input class="readonly" value="${escAttr(p.contract)}" readonly></div>
     <div class="detail-group"><label>יחידת מידה</label><input class="readonly" value="${escAttr(p.unit)}" readonly></div>
-    <div class="detail-group"><label>מחיר ל${p.unit||'יחידה'}</label><input class="readonly" value="₪${fmt(p.price)}" readonly></div>
+    <div class="detail-group"><label>מחיר ל${isLength?'מטר רץ':(p.unit||'יחידה')}</label><input class="readonly" value="₪${fmt(p.price)}" readonly></div>
     <div class="detail-group"><label>כמות</label><input type="number" id="dQty" min="0" step="1" value="${escAttr(qtyVal)}" oninput="updateDetailPreview()"></div>
     ${isSqm?`
     <div class="detail-group"><label>גובה (ס"מ)</label><input type="number" id="dHeight" min="0" step="1" placeholder="גובה" value="${escAttr(heightVal)}" oninput="updateDetailPreview()"></div>
     <div class="detail-group"><label>רוחב (ס"מ)</label><input type="number" id="dWidth" min="0" step="1" placeholder="רוחב" value="${escAttr(widthVal)}" oninput="updateDetailPreview()"></div>
+    `:isLength?`
+    <div class="detail-group"><label>גובה (ס"מ)</label><input class="readonly" value="20" readonly><input type="hidden" id="dHeight" value="20"></div>
+    <div class="detail-group"><label>אורך (ס"מ)</label><input type="number" id="dWidth" min="0" step="1" placeholder="אורך בס&quot;מ" value="${escAttr(widthVal)}" oninput="updateDetailPreview()"></div>
     `:`<input type="hidden" id="dHeight" value="0"><input type="hidden" id="dWidth" value="0">`}
     <div class="detail-group full"><label>הערות</label><input type="text" id="dNotes" placeholder="הערות (לא חובה)" value="${escAttr(notesVal)}"></div>
     <div class="detail-preview" id="detailPreview">
-      <span class="dp-label">${isSqm?'מ"ר: 0 | ':''}סה"כ:</span>
+      <span class="dp-label">${isSqm?'מ"ר: 0 | ':isLength?'אורך: 0 מ׳ | ':''}סה"כ:</span>
       <span class="dp-value">₪0</span>
     </div>
   `;
   document.getElementById('detailModal').style.display='flex';
   updateDetailPreview();
-  setTimeout(()=>{(isSqm?document.getElementById('dHeight'):document.getElementById('dQty'))?.focus()},100);
+  setTimeout(()=>{
+    const first = (isSqm?document.getElementById('dHeight'):isLength?document.getElementById('dWidth'):document.getElementById('dQty'));
+    first?.focus();
+  },100);
 }
 
 function updateDetailPreview() {
@@ -1245,11 +1409,14 @@ function updateDetailPreview() {
   const w=parseFloat(document.getElementById('dWidth')?.value)||0;
   const q=parseFloat(document.getElementById('dQty')?.value)||0;
   const isSqm=p.type==='sqm';
-  let sqm=0,total=0;
-  if(isSqm){sqm=(h*w/10000)*q;total=p.price*sqm}else{total=p.price*q}
+  const isLength=p.type==='length';
+  let sqm=0,total=0,lengthM=0;
+  if(isSqm){sqm=(h*w/10000)*q;total=p.price*sqm}
+  else if(isLength){lengthM=w/100;total=p.price*lengthM*q}
+  else{total=p.price*q}
   const prev=document.getElementById('detailPreview');
   if(prev)prev.innerHTML=`
-    <span class="dp-label">${isSqm?'מ"ר: '+sqm.toFixed(2)+' | ':''}סה"כ:</span>
+    <span class="dp-label">${isSqm?'מ"ר: '+sqm.toFixed(2)+' | ':isLength?'אורך: '+lengthM.toFixed(2)+' מ׳ | ':''}סה"כ:</span>
     <span class="dp-value">₪${fmt(total)}</span>`;
 }
 
@@ -1681,8 +1848,11 @@ async function handlePdfUpload(event) {
   }
 }
 
-// Extracts quote metadata and totals from RTL-sorted text pulled out of a PDF.
-// Handles Senzey-style quotes (as used by פלוס דיזיין).
+// Extracts quote metadata, totals AND the individual item rows from
+// RTL-sorted text pulled out of a PDF. Handles Senzey-style quotes (the
+// format used by פלוס דיזיין). Each item row is classified as either a
+// product, an installation day, or design hours so we can re-materialise a
+// matching multi-row quote instead of collapsing everything to one sticker.
 function extractQuoteData(rawText) {
   // Normalise Hebrew gershayim/geresh to ASCII punctuation.
   const text = rawText
@@ -1729,11 +1899,47 @@ function extractQuoteData(rawText) {
     return /סה"?כלפני/.test(f) || /סה"?כלתשלום/.test(f);
   });
   const scanLines = summaryIdx >= 0 ? lines.slice(0, summaryIdx) : lines;
-  let itemCount = 0;
+
+  // Parse each "N. ..." line into a structured item with a classification.
+  // We extract all numbers on the line; the last is the row total, the
+  // second-to-last is the unit price, and earlier numbers (if any) map to
+  // qty / width / height depending on how many are present.
+  const products = [];
+  const installations = [];
+  const designs = [];
+
   for (const line of scanLines) {
-    if (!/^\s*\d+\.\s*[א-ת]/.test(line)) continue;
-    const nums = line.match(/\d[\d,.]*/g) || [];
-    if (nums.length >= 2) itemCount++;
+    const m = line.match(/^\s*(\d+)\.\s*(.+)$/);
+    if (!m) continue;
+    const rest = m[2];
+    // Pull out numeric tokens preserving order.
+    const numRe = /\d[\d,]*\.?\d*/g;
+    const nums = [];
+    let nm;
+    while ((nm = numRe.exec(rest))) {
+      const v = parseFloat(nm[0].replace(/,/g, ''));
+      if (isFinite(v)) nums.push(v);
+    }
+    if (nums.length < 2) continue;
+    const total = nums[nums.length - 1];
+    const unitPrice = nums[nums.length - 2];
+    if (total <= 0) continue;  // category-header rows come out as 0 — skip.
+
+    const qty = nums.length >= 3 ? nums[nums.length - 3] : 1;
+    // Remaining leading numbers may be width / height (in meters). Order
+    // after the row number is typically: [sqmPrice] height width qty unit total
+    const leading = nums.slice(0, Math.max(0, nums.length - 3));
+    let width = null, height = null;
+    if (leading.length >= 2) { height = leading[leading.length - 2]; width = leading[leading.length - 1]; }
+    else if (leading.length === 1) { width = leading[0]; }
+
+    // Classify
+    const isInstall = /התקנ|מתקי|אספק.*התקנ/.test(rest);
+    const isDesign = /עיצוב/.test(rest) && !isInstall;
+    const item = { total, unitPrice, qty, width, height, raw: rest };
+    if (isInstall)      installations.push(item);
+    else if (isDesign)  designs.push(item);
+    else                products.push(item);
   }
 
   return {
@@ -1742,8 +1948,156 @@ function extractQuoteData(rawText) {
     title,
     net: pickNumber(netMatch),
     gross: pickNumber(grossMatch),
-    itemCount,
+    items: { products, installations, designs },
+    itemCount: products.length + installations.length + designs.length,
   };
+}
+
+// Build a replacement quote that preserves the structure of the uploaded PDF
+// (number of rows, installation days, design hours) but draws all products
+// from our internal catalog so the user lands on a ready-to-send quote
+// hitting the same total.
+function buildPdfReplacementQuote(data) {
+  const netTarget = data.net || (data.gross ? data.gross / 1.18 : 0);
+  if (!netTarget || netTarget <= 0) return null;
+
+  const installer1 = pgFindItem('יום עבודה - מתקין 1 (8.5 שעות)');
+  const installer2 = pgFindItem('יום עבודה - 2 מתקינים (8.5 שעות)');
+  const designHours = pgFindItem('שעות עיצוב');
+
+  const { installations = [], designs = [], products: pdfProducts = [] } = data.items || {};
+
+  // ── Tail rows: installation + design (one product per PDF row). ──
+  const tailRows = [];
+  let tailSum = 0;
+
+  for (const inst of installations) {
+    const qty = Math.max(1, Math.round(inst.qty || 1));
+    // Pick 1-installer vs 2-installer based on which unit price is closer.
+    let prod = installer1;
+    if (installer2 && inst.unitPrice) {
+      const d1 = Math.abs(inst.unitPrice - installer1.price);
+      const d2 = Math.abs(inst.unitPrice - installer2.price);
+      if (d2 < d1) prod = installer2;
+    }
+    if (!prod) continue;
+    tailRows.push({ product: prod, height: '', width: '', qty: String(qty), notes: '' });
+    tailSum += prod.price * qty;
+  }
+  for (const d of designs) {
+    if (!designHours) continue;
+    const hrs = Math.max(1, Math.round(d.qty || 1));
+    tailRows.push({ product: designHours, height: '', width: '', qty: String(hrs), notes: '' });
+    tailSum += designHours.price * hrs;
+  }
+  // If the PDF had no explicit installation/design but the target is big
+  // enough to justify them, add sensible defaults at the tail.
+  if (!installations.length && installer1 && netTarget >= 4000) {
+    const days = netTarget >= 20000 ? 2 : 1;
+    tailRows.push({ product: installer1, height: '', width: '', qty: String(days), notes: '' });
+    tailSum += installer1.price * days;
+  }
+  if (!designs.length && designHours && netTarget >= 4000) {
+    const hrs = Math.min(5, Math.max(1, Math.round(netTarget / 6000)));
+    tailRows.push({ product: designHours, height: '', width: '', qty: String(hrs), notes: '' });
+    tailSum += designHours.price * hrs;
+  }
+
+  // ── Product rows: one per PDF product row, each scaled to its share of
+  //    the remaining budget. If the PDF listed totals per row we use those
+  //    directly (preserving relative sizes); otherwise we split evenly. ──
+  let productCount = pdfProducts.length;
+  if (productCount < 1) productCount = 3;
+  if (productCount > 12) productCount = 12;
+
+  const productBudget = Math.max(50, netTarget - tailSum);
+
+  // Normalise the PDF per-product totals into a weight vector summing to 1.
+  // This lets big items in the original stay big in the replacement.
+  const rawWeights = pdfProducts.slice(0, productCount).map(p => Math.max(1, p.total || 0));
+  const weightSum = rawWeights.reduce((a, b) => a + b, 0);
+  const weights = weightSum > 0
+    ? rawWeights.map(w => w / weightSum)
+    : Array(productCount).fill(1 / productCount);
+  while (weights.length < productCount) weights.push(1 / productCount);
+
+  // Candidate pool — sqm products only, so dimensions look realistic.
+  const pool = [];
+  PRODUCTS.forEach(cat => {
+    if (PG_EXCLUDED_CATEGORIES.has(cat.cat)) return;
+    cat.items.forEach(it => {
+      if (PG_EXCLUDED_NAMES.has(it.name)) return;
+      if (it.type !== 'sqm') return;
+      pool.push(it);
+    });
+  });
+  if (!pool.length) return null;
+
+  const productRows = [];
+  const usedNames = new Set();
+  let allocated = 0;
+
+  for (let i = 0; i < productCount; i++) {
+    // Either use the weighted slice or (for the last row) whatever budget
+    // is left so the sum exactly matches productBudget.
+    let chunk = i < productCount - 1
+      ? productBudget * weights[i]
+      : Math.max(50, productBudget - allocated);
+    if (chunk <= 0) chunk = productBudget / productCount;
+
+    // Pick an unused catalog item when possible so the quote looks varied.
+    let candidates = pool.filter(p => !usedNames.has(p.name));
+    if (!candidates.length) candidates = pool;
+    const item = candidates[Math.floor(Math.random() * candidates.length)];
+    usedNames.add(item.name);
+
+    // Compute dimensions to hit the chunk total with qty=1. Step = 1 ס"מ
+    // for better precision, clamped to [10, 3000] so small chunks don't
+    // overshoot and large ones aren't capped.
+    const h = PG_SQM_HEIGHTS[Math.floor(Math.random() * PG_SQM_HEIGHTS.length)];
+    const areaM2 = chunk / item.price;
+    let w = Math.round(areaM2 * 10000 / h);
+    w = Math.max(10, Math.min(3000, w));
+    const rowTotal = item.price * (h * w / 10000);
+    allocated += rowTotal;
+
+    productRows.push({ product: item, height: String(h), width: String(w), qty: '1', notes: '' });
+  }
+
+  // ── Refinement pass: nudge the biggest row's width so the product
+  //    subtotal hits productBudget exactly. Dimension discretisation
+  //    means each row drifts a few ₪ — without this step the drift can
+  //    accumulate into hundreds on a long quote. ──
+  const refine = () => {
+    let sum = 0;
+    productRows.forEach(r => { sum += calcRow(r).total; });
+    const drift = productBudget - sum;
+    if (Math.abs(drift) < 1) return;
+    // Pick the row with the largest currentTotal so the adjustment has
+    // enough headroom to be fractional (in ס"מ).
+    let target = null, targetTotal = -Infinity;
+    for (const r of productRows) {
+      if (r.product.type !== 'sqm') continue;
+      const t = calcRow(r).total;
+      if (t > targetTotal) { target = r; targetTotal = t; }
+    }
+    if (!target) return;
+    const h = parseFloat(target.height) || 50;
+    const wanted = targetTotal + drift;
+    if (wanted <= 0) return;
+    const newAreaM2 = wanted / target.product.price;
+    let newW = Math.round(newAreaM2 * 10000 / h);
+    newW = Math.max(10, Math.min(3000, newW));
+    target.width = String(newW);
+  };
+  refine();
+
+  const rows = [...productRows, ...tailRows];
+  let subtotal = 0;
+  rows.forEach(r => { subtotal += calcRow(r).total; });
+  const discountILS = Math.max(0, subtotal - netTarget);
+  const discountPct = subtotal > 0 ? Math.round((discountILS / subtotal) * 10000) / 100 : 0;
+  return { rows, subtotal, discountILS, discountPct };
 }
 
 function runPdfGen() {
@@ -1751,14 +2105,18 @@ function runPdfGen() {
   const err = document.getElementById('uploadError');
   err.textContent = '';
 
-  // Net target is authoritative; fall back to gross ÷ 1.18.
-  const target = pdfExtracted.net || (pdfExtracted.gross ? pdfExtracted.gross / 1.18 : 0);
-  if (!target || target <= 0) {
-    err.textContent = 'לא הצלחתי לחלץ סכום תקין מהקובץ';
-    return;
+  // Prefer the structure-preserving builder: one row per PDF row, with
+  // installation/design coming from our catalog. Fall back to the random
+  // price-only generator if the PDF didn't parse into items at all.
+  let result = buildPdfReplacementQuote(pdfExtracted);
+  if (!result) {
+    const target = pdfExtracted.net || (pdfExtracted.gross ? pdfExtracted.gross / 1.18 : 0);
+    if (!target || target <= 0) {
+      err.textContent = 'לא הצלחתי לחלץ סכום תקין מהקובץ';
+      return;
+    }
+    result = generateByPrice(target);
   }
-
-  const result = generateByPrice(target);
   if (!result) {
     err.textContent = 'שגיאה פנימית, נסה שוב';
     return;
