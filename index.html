@@ -595,21 +595,15 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
     </div>
     <div class="modal-body">
       <div class="detail-form">
-        <div class="detail-group full">
-          <label>מחיר יעד (₪)</label>
-          <input type="number" id="pgTarget" min="100" step="50" placeholder="למשל: 3000" oninput="updatePgPreview()">
+        <div class="detail-group">
+          <label>כולל מע"מ (18%)</label>
+          <input type="number" id="pgGross" min="1" step="1" placeholder="למשל: 3000" oninput="pgSync('gross')">
         </div>
-        <div class="detail-group full">
-          <label>בסיס החישוב</label>
-          <select id="pgBasis" onchange="updatePgPreview()" style="padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:var(--radius);font-family:inherit;font-size:14px;background:var(--white)">
-            <option value="gross">כולל מע"מ (מה שהלקוח משלם)</option>
-            <option value="net">לפני מע"מ</option>
-          </select>
+        <div class="detail-group">
+          <label>לפני מע"מ</label>
+          <input type="number" id="pgNet" min="1" step="1" placeholder="למשל: 2542" oninput="pgSync('net')">
         </div>
       </div>
-      <p style="font-size:12px;color:var(--gray-500);margin-top:14px;line-height:1.6">
-        המערכת תבחר מספר סעיפים מהמחירון בצירוף הקרוב למחיר היעד, ותשלים את ההפרש בהנחה של עד <strong>₪500</strong> לדיוק מלא. ניתן לערוך כל שורה אחרי הייצור.
-      </p>
       <div id="pgError" style="color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px"></div>
     </div>
     <div class="modal-footer">
@@ -1035,39 +1029,56 @@ function pgFindItem(name) {
   return null;
 }
 
+let pgLastSource = 'gross';
+
 function openPriceGen() {
   document.getElementById('priceGenModal').style.display='flex';
-  document.getElementById('pgTarget').value='';
+  document.getElementById('pgNet').value='';
+  document.getElementById('pgGross').value='';
   document.getElementById('pgError').textContent='';
-  setTimeout(()=>document.getElementById('pgTarget').focus(), 100);
+  pgLastSource = 'gross';
+  setTimeout(()=>document.getElementById('pgGross').focus(), 100);
 }
 function closePriceGen() {
   document.getElementById('priceGenModal').style.display='none';
   document.getElementById('pgError').textContent='';
 }
-function updatePgPreview() {
-  document.getElementById('pgError').textContent='';
+
+// Two-way sync between "before VAT" and "incl. VAT" inputs — whichever one
+// the user types in, the other updates live at 18% VAT.
+function pgSync(source) {
+  pgLastSource = source;
+  const netEl = document.getElementById('pgNet');
+  const grossEl = document.getElementById('pgGross');
+  if (source === 'net') {
+    const n = parseFloat(netEl.value);
+    grossEl.value = isFinite(n) && n > 0 ? Math.round(n * 1.18) : '';
+  } else {
+    const g = parseFloat(grossEl.value);
+    netEl.value = isFinite(g) && g > 0 ? Math.round(g / 1.18) : '';
+  }
+  document.getElementById('pgError').textContent = '';
 }
 
-// Attempts to build a quote of catalog rows whose subtotal (before VAT) is
-// within [netTarget, netTarget + PG_MAX_DISCOUNT_ILS]; the gap is then applied
-// as a discount percent so the final "לפני מע\"מ" lands exactly on netTarget.
+// Inner attempt: tries to build rows hitting netTarget within a specific
+// discount cap and minimum row count. Returns null if this attempt can't
+// find a combination matching those constraints.
 //
-// Generation rules (per user request):
-//   1. Always prefer to include a full installer day (1 or 2 installers).
-//   2. Always include design hours in every generation.
-//   3. Never include "מתקני תצוגה" (rollups) or the 2-hour mini-installs.
-//   4. Spread across more, cheaper rows rather than few expensive rows.
-function generateByPrice(netTarget) {
-  if (!isFinite(netTarget) || netTarget < 50) return null;
-
+// "mega" relaxes constraints for very large targets: no per-item price
+// filter, more rows allowed, higher quantities, wider sqm rows, and each
+// row covers a bigger slice of the remaining budget.
+function pgTryGenerate(netTarget, maxDiscountILS, minRows, attempts, mega = false) {
   const installer1 = pgFindItem('יום עבודה - מתקין 1 (8.5 שעות)');
   const installer2 = pgFindItem('יום עבודה - 2 מתקינים (8.5 שעות)');
   const designHours = pgFindItem('שעות עיצוב');
 
-  // Filler catalog: skip excluded categories / names and skip items that
-  // would dominate the budget (> 45% of target) so the quote spreads out.
-  const maxSingleItemPrice = Math.max(netTarget * 0.45, 250);
+  const maxSingleItemPrice = mega ? Infinity : Math.max(netTarget * 0.45, 250);
+  const maxRows = mega ? 15 : 9;
+  const maxUnitQty = mega ? 10 : 2;
+  const sqmMaxW = mega ? 500 : 300;
+  const fracMin = mega ? 0.2 : 0.15;
+  const fracMax = mega ? 0.6 : 0.35;
+
   const catalog = [];
   PRODUCTS.forEach(cat => {
     if (PG_EXCLUDED_CATEGORIES.has(cat.cat)) return;
@@ -1081,80 +1092,76 @@ function generateByPrice(netTarget) {
 
   const rand = (min, max) => min + Math.random() * (max - min);
 
-  for (let attempt = 0; attempt < 500; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     const rows = [];
     let sum = 0;
     const usedNames = new Set();
 
-    // ── Step 1: design hours (always, if any realistic room) ──
+    // Step 1: design hours (always prefer to include)
     if (designHours && netTarget >= 400) {
       const maxHours = Math.min(5, Math.max(1, Math.round(netTarget / 2000)));
       const hours = 1 + Math.floor(Math.random() * maxHours);
       const total = designHours.price * hours;
-      // Cap design at ~20% of budget so it doesn't crowd out real products.
-      if (total <= netTarget * 0.25 && sum + total <= netTarget) {
+      if (total <= netTarget * 0.25 && sum + total <= netTarget + maxDiscountILS) {
         rows.push({ product: designHours, height: '', width: '', qty: String(hours), notes: '' });
         sum += total;
         usedNames.add(designHours.name);
       }
     }
 
-    // ── Step 2: installer day (prefer full day, 1 or 2 installers) ──
+    // Step 2: full installer day (1 or 2 installers)
     if (installer1 && netTarget >= 1800) {
-      // Pick 2-installer day only when there is real room for it + extra rows.
       let installer = installer1;
       if (installer2 && netTarget >= 5000 && Math.random() < 0.4) {
         installer = installer2;
       }
-      // Leave at least ₪300 for filler so we still get extra rows.
-      if (sum + installer.price + 300 <= netTarget + PG_MAX_DISCOUNT_ILS) {
+      if (sum + installer.price + 300 <= netTarget + maxDiscountILS) {
         rows.push({ product: installer, height: '', width: '', qty: '1', notes: '' });
         sum += installer.price;
         usedNames.add(installer.name);
       }
     }
 
-    // ── Step 3: fill the rest with several small rows ──
+    // Step 3: fill with small rows
     const pool = [...catalog].sort(() => Math.random() - 0.5);
 
     for (const it of pool) {
-      if (rows.length >= 9) break;
-      if (sum >= netTarget) break;
+      if (rows.length >= maxRows) break;
+      if (sum >= netTarget && rows.length >= minRows) break;
       if (usedNames.has(it.name)) continue;
 
-      const remaining = netTarget - sum;
+      const remaining = Math.max(1, netTarget - sum);
       let rowTotal = 0, height = '', width = '', qty = '1';
 
       if (it.type === 'sqm') {
-        // Target a small slice of the remaining budget (15–35%).
-        const targetRowPrice = Math.min(remaining + PG_MAX_DISCOUNT_ILS, remaining * rand(0.15, 0.35));
+        const targetRowPrice = Math.max(remaining * rand(fracMin, fracMax), 40);
         const targetArea = targetRowPrice / it.price;
-        if (targetArea < 0.12) continue;
+        if (targetArea < 0.08) continue;
         const h = PG_SQM_HEIGHTS[Math.floor(Math.random() * PG_SQM_HEIGHTS.length)];
         let w = Math.round((targetArea * 10000 / h) / 10) * 10;
-        w = Math.max(30, Math.min(300, w));
+        w = Math.max(20, Math.min(sqmMaxW, w));
         rowTotal = it.price * (h * w / 10000);
-        if (sum + rowTotal > netTarget + PG_MAX_DISCOUNT_ILS) {
-          const maxArea = (netTarget + PG_MAX_DISCOUNT_ILS - sum) / it.price;
-          w = Math.max(30, Math.floor((maxArea * 10000 / h) / 10) * 10);
+        if (sum + rowTotal > netTarget + maxDiscountILS) {
+          const maxArea = (netTarget + maxDiscountILS - sum) / it.price;
+          if (maxArea <= 0) continue;
+          w = Math.max(20, Math.floor((maxArea * 10000 / h) / 10) * 10);
           rowTotal = it.price * (h * w / 10000);
-          if (w < 30 || rowTotal <= 0) continue;
+          if (w < 20 || rowTotal <= 0) continue;
         }
         height = String(h); width = String(w);
       } else if (it.type === 'unit') {
-        // Prefer low quantities (1–2) to spread across more products.
-        const targetRowPrice = Math.min(remaining + PG_MAX_DISCOUNT_ILS, remaining * rand(0.15, 0.35));
-        let q = Math.max(1, Math.min(2, Math.round(targetRowPrice / it.price)));
+        const targetRowPrice = Math.max(remaining * rand(fracMin, fracMax), 40);
+        let q = Math.max(1, Math.min(maxUnitQty, Math.round(targetRowPrice / it.price)));
         rowTotal = it.price * q;
-        if (sum + rowTotal > netTarget + PG_MAX_DISCOUNT_ILS) {
-          q = Math.floor((netTarget + PG_MAX_DISCOUNT_ILS - sum) / it.price);
+        if (sum + rowTotal > netTarget + maxDiscountILS) {
+          q = Math.floor((netTarget + maxDiscountILS - sum) / it.price);
           if (q < 1) continue;
-          q = Math.min(q, 2);
+          q = Math.min(q, maxUnitQty);
           rowTotal = it.price * q;
         }
         qty = String(q);
       } else { // fixed
-        if (sum + it.price > netTarget + PG_MAX_DISCOUNT_ILS) continue;
+        if (sum + it.price > netTarget + maxDiscountILS) continue;
         rowTotal = it.price;
       }
 
@@ -1164,8 +1171,7 @@ function generateByPrice(netTarget) {
       usedNames.add(it.name);
     }
 
-    // Successful if we reached the target and the overshoot fits the cap.
-    if (rows.length >= 3 && sum >= netTarget && sum <= netTarget + PG_MAX_DISCOUNT_ILS) {
+    if (rows.length >= minRows && sum >= netTarget && sum <= netTarget + maxDiscountILS) {
       const discountILS = sum - netTarget;
       const discountPct = sum > 0 ? Math.round((discountILS / sum) * 10000) / 100 : 0;
       return { rows, subtotal: sum, discountILS, discountPct };
@@ -1174,24 +1180,90 @@ function generateByPrice(netTarget) {
   return null;
 }
 
+// Deterministic fallback used when every tier fails. Picks the cheapest sqm
+// item and either computes exact dimensions (for small targets) or scales via
+// qty (for very large targets) so every positive target can be reached.
+function pgBuildFallback(netTarget) {
+  let cheapest = null;
+  PRODUCTS.forEach(cat => {
+    if (PG_EXCLUDED_CATEGORIES.has(cat.cat)) return;
+    cat.items.forEach(it => {
+      if (PG_EXCLUDED_NAMES.has(it.name)) return;
+      if (it.type !== 'sqm') return;
+      if (!cheapest || it.price < cheapest.price) cheapest = it;
+    });
+  });
+  if (!cheapest) return null;
+
+  const hDefault = 100, wDefault = 200;
+  const defaultRowTotal = cheapest.price * (hDefault * wDefault / 10000);
+  let rows, sum;
+
+  if (netTarget >= defaultRowTotal) {
+    // Large target: standard 100×200 cm sticker with scaled qty.
+    const qty = Math.max(1, Math.ceil(netTarget / defaultRowTotal));
+    const rowTotal = defaultRowTotal * qty;
+    rows = [{ product: cheapest, height: String(hDefault), width: String(wDefault), qty: String(qty), notes: '' }];
+    sum = rowTotal;
+  } else {
+    // Small target: compute dimensions to hit it with qty=1.
+    const h = hDefault;
+    const area = netTarget / cheapest.price;
+    let w = Math.max(10, Math.round(area * 10000 / h / 10) * 10);
+    let rowTotal = cheapest.price * (h * w / 10000);
+    while (rowTotal < netTarget && w < 500) {
+      w += 10;
+      rowTotal = cheapest.price * (h * w / 10000);
+    }
+    rows = [{ product: cheapest, height: String(h), width: String(w), qty: '1', notes: '' }];
+    sum = rowTotal;
+  }
+
+  const discountILS = Math.max(0, sum - netTarget);
+  const discountPct = sum > 0 ? Math.round((discountILS / sum) * 10000) / 100 : 0;
+  return { rows, subtotal: sum, discountILS, discountPct };
+}
+
+// Public entry point — always returns a valid quote for any positive target
+// by progressively relaxing the discount cap and minimum row count. Tier 4
+// ("mega") handles very large targets that exceed the regular filters.
+function generateByPrice(netTarget) {
+  if (!isFinite(netTarget) || netTarget <= 0) return null;
+
+  let r = pgTryGenerate(netTarget, 500, 3, 250);
+  if (r) return r;
+  r = pgTryGenerate(netTarget, 1500, 2, 150);
+  if (r) return r;
+  r = pgTryGenerate(netTarget, 5000, 1, 120);
+  if (r) return r;
+  r = pgTryGenerate(netTarget, 10000, 1, 150, true);
+  if (r) return r;
+
+  return pgBuildFallback(netTarget);
+}
+
 function runPriceGen() {
-  const targetInput = document.getElementById('pgTarget');
   const err = document.getElementById('pgError');
-  const basis = document.getElementById('pgBasis').value;
   err.textContent = '';
 
-  const raw = parseFloat(targetInput.value);
-  if (!raw || raw < 100) {
-    err.textContent = 'הזן מחיר יעד תקין (לפחות ₪100)';
+  // Use whichever input was last edited as the authoritative source so
+  // we don't lose precision to the rounded mirror input.
+  let target = 0;
+  if (pgLastSource === 'net') {
+    target = parseFloat(document.getElementById('pgNet').value);
+  } else {
+    const g = parseFloat(document.getElementById('pgGross').value);
+    if (isFinite(g) && g > 0) target = g / 1.18;
+  }
+
+  if (!isFinite(target) || target <= 0) {
+    err.textContent = 'הזן מחיר יעד';
     return;
   }
 
-  // Convert to "before VAT" since the quote math and discount both run on net.
-  const netTarget = basis === 'gross' ? raw / 1.18 : raw;
-
-  const result = generateByPrice(netTarget);
+  const result = generateByPrice(target);
   if (!result) {
-    err.textContent = 'לא הצלחתי להרכיב הצעה לסכום הזה. נסה מחיר אחר.';
+    err.textContent = 'שגיאה פנימית, נסה שוב';
     return;
   }
 
