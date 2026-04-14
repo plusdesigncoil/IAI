@@ -352,8 +352,8 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 }
 
 @media print{
-  @page{margin:15mm}
-  body{background:#fff;font-size:12px}
+  @page{margin:8mm}
+  body{background:#fff;font-size:10px}
   .page-wrap{margin:0;padding:0;max-width:100%;display:block!important}
   .quote-doc{box-shadow:none;border-radius:0}
   .actions-bar,.no-print,.row-btn,.del-btn,.row-actions,.row-actions-cell,.login-overlay{display:none!important}
@@ -361,27 +361,71 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .discount-inline input{border:none;font-weight:700;background:transparent}
 
-  /* Defensive reset in case a browser leaks the mobile card layout into print */
-  .company-header{flex-direction:row!important;padding:24px 32px 20px!important;align-items:flex-start!important;text-align:initial!important}
+  /* ── Company header ── */
+  .company-header{flex-direction:row!important;padding:12px 20px 10px!important;align-items:flex-start!important;text-align:initial!important;border-bottom-width:2px!important}
   .company-logo{order:2!important}
-  .company-logo svg{height:55px!important}
-  .company-info{order:1!important;width:auto!important;text-align:right!important;direction:rtl!important;font-size:12px!important}
-  .company-info .company-name{text-align:right!important;font-size:16px!important}
-  .company-info .info-row{justify-content:flex-start!important;flex-wrap:nowrap!important}
-  .quote-meta{grid-template-columns:1fr 1fr!important;padding:20px 32px!important}
+  .company-logo svg{height:38px!important}
+  .company-info{order:1!important;width:auto!important;text-align:right!important;direction:rtl!important;font-size:9px!important;line-height:1.4!important}
+  .company-info .company-name{text-align:right!important;font-size:12.5px!important;margin-bottom:2px!important}
+  .company-info .info-row{justify-content:flex-start!important;flex-wrap:nowrap!important;margin-bottom:0!important}
+
+  /* ── Quote meta — technical, no underlines, no pill badges ── */
+  .quote-meta{grid-template-columns:1fr 1fr!important;padding:10px 20px!important;gap:2px 30px!important;border-bottom:1px solid #ccc!important}
+  .quote-meta .meta-row{padding:1px 0!important}
+  .quote-meta .meta-label{font-weight:500!important;color:#555!important;font-size:9.5px!important;min-width:62px!important}
+  .quote-meta .meta-label::after{content:':'}
+  .quote-meta .meta-value input,
+  .quote-meta .meta-value input.locked{
+    border:none!important;background:transparent!important;padding:0!important;
+    font-weight:700!important;color:#000!important;font-size:10.5px!important;
+    box-shadow:none!important;height:auto!important;
+  }
+  .quote-meta .meta-value input::placeholder{color:transparent!important}
+  .quote-meta .meta-value input[type="date"]{font-size:10px!important}
+  .quote-meta .user-badge{
+    background:transparent!important;padding:0!important;color:#000!important;
+    font-weight:700!important;font-size:10.5px!important;border-radius:0!important;
+  }
+
+  /* ── Items table — compact fixed layout so everything fits on one page ── */
   .items-section{padding:0!important;background:transparent!important}
-  .items-table{display:table!important;width:100%!important;background:transparent!important}
+  .items-table{display:table!important;width:100%!important;background:transparent!important;table-layout:fixed!important;font-size:8.5px!important}
   .items-table thead{display:table-header-group!important}
+  .items-table thead th{padding:4px 2px!important;font-size:8px!important;line-height:1.15!important;white-space:normal!important;border-bottom-width:1.5px!important}
+  /* Explicit narrow column widths; פרטים (item name) flexes */
+  .items-table thead th:nth-child(1){width:22px!important}
+  .items-table thead th:nth-child(2){width:auto!important}
+  .items-table thead th:nth-child(3){width:38px!important}
+  .items-table thead th:nth-child(4){width:48px!important}
+  .items-table thead th:nth-child(5){width:40px!important}
+  .items-table thead th:nth-child(6){width:38px!important}
+  .items-table thead th:nth-child(7){width:38px!important}
+  .items-table thead th:nth-child(8){width:32px!important}
+  .items-table thead th:nth-child(9){width:34px!important}
+  .items-table thead th:nth-child(10){width:40px!important}
+  .items-table thead th:nth-child(11){width:50px!important}
+  .items-table thead th:nth-child(12){width:56px!important}
+  .items-table thead th:nth-child(13){display:none!important}
+
   .items-table tbody{display:table-row-group!important}
   .items-table tr{display:table-row!important;background:transparent!important;border:none!important;margin:0!important;padding:0!important;box-shadow:none!important}
-  .items-table td{display:table-cell!important;padding:7px 10px!important;border-bottom:1px solid var(--gray-100)!important;text-align:right}
-  .items-table td.num-cell{text-align:center!important}
+  .items-table td{display:table-cell!important;padding:3px 2px!important;border-bottom:1px solid #eee!important;text-align:right;font-size:8.5px!important;line-height:1.2!important;vertical-align:middle!important;word-wrap:break-word!important;overflow-wrap:break-word!important}
+  .items-table td.num-cell{text-align:center!important;white-space:nowrap!important}
   .items-table tbody td::before{content:none!important}
-  .items-table tbody td.row-num{display:table-cell!important;text-align:center!important;width:30px!important}
-  .items-table tbody td.item-name{display:table-cell!important;font-size:12.5px!important;font-weight:500!important;padding:7px 10px!important;margin:0!important;border:none!important;border-bottom:1px solid var(--gray-100)!important;max-width:200px!important}
+  .items-table tbody td.row-num{display:table-cell!important;text-align:center!important;width:22px!important;color:#888!important}
+  .items-table tbody td.item-name{display:table-cell!important;font-size:9px!important;font-weight:600!important;padding:3px 4px!important;margin:0!important;border:none!important;border-bottom:1px solid #eee!important;max-width:none!important;line-height:1.2!important;word-wrap:break-word!important}
+  .items-table .contract-badge{font-size:8px!important;padding:0 4px!important;font-weight:700!important}
+  .items-table .total-cell{font-weight:700!important}
+  .items-table .notes-cell{font-size:8px!important;color:#888!important}
   .items-table tbody tr{page-break-inside:avoid}
   .company-header,.quote-meta{page-break-after:avoid}
-  .summary-section{justify-content:flex-end!important;padding:20px 32px!important}
+
+  /* ── Summary — compact ── */
+  .summary-section{justify-content:flex-end!important;padding:10px 20px 14px!important;gap:0!important;border-top:1.5px solid #000!important}
+  .summary-box{min-width:230px!important}
+  .summary-row{padding:2px 0!important;font-size:10px!important}
+  .summary-row.grand{font-size:12px!important;padding:5px 0 0!important}
+  .summary-divider{margin:4px 0!important}
 }
 </style>
 </head>
