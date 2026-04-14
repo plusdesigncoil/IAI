@@ -496,6 +496,13 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .items-table tbody{display:table-row-group!important}
   .items-table tr{display:table-row!important;background:transparent!important;border:none!important;margin:0!important;padding:0!important;box-shadow:none!important}
   .items-table td{display:table-cell!important;padding:3px 2px!important;border-bottom:1px solid #eee!important;text-align:right;font-size:8.5px!important;line-height:1.2!important;vertical-align:middle!important;word-wrap:break-word!important;overflow-wrap:break-word!important}
+  /* Force-hide the .no-print / row-actions-cell entries AFTER the
+     generic td rule above, so the thead and tbody column counts stay
+     aligned in print. Otherwise the tbody keeps a phantom actions
+     column and every following cell shifts one slot to the left. */
+  .items-table td.no-print,
+  .items-table td.row-actions-cell,
+  .items-table th.no-print{display:none!important;width:0!important;padding:0!important;border:0!important}
   .items-table td.num-cell{text-align:center!important;white-space:nowrap!important}
   .items-table tbody td::before{content:none!important}
   /* Inline-editable cell inputs render as plain text in print (no border,
@@ -1494,6 +1501,21 @@ const PG_EXCLUDED_NAMES = new Set([
 // Category names that should always appear at the end of the quote.
 const PG_TAIL_CATEGORIES = new Set(['אספקה / התקנה', 'עיצוב גרפי']);
 
+// Priority scoring for the random generator. Items whose name contains
+// a "high" keyword land at the top of the picking order; items in the
+// "low" list (shamshonit) drop to the bottom so they only get picked
+// when nothing else fits.
+const PG_HIGH_PRIORITY_KEYWORDS = [
+  'פסי עץ פולימר', 'מגן קיר', 'לוח מחיק',
+  'מדבקת קיר', 'התזת חול', 'פרספקס',
+];
+const PG_LOW_PRIORITY_KEYWORDS = ['שמשונית'];
+const PG_PRIORITY = name => {
+  for (const k of PG_HIGH_PRIORITY_KEYWORDS) if (name.includes(k)) return 4;
+  for (const k of PG_LOW_PRIORITY_KEYWORDS)  if (name.includes(k)) return 0.1;
+  return 1;
+};
+
 function pgFindItem(name) {
   for (const cat of PRODUCTS) {
     for (const it of cat.items) if (it.name === name) return it;
@@ -1598,8 +1620,15 @@ function pgTryGenerate(netTarget, maxDiscountILS, minRows, attempts, mega = fals
       }
     }
 
-    // Filler: real catalog products chosen randomly.
-    const pool = [...catalog].sort(() => Math.random() - 0.5);
+    // Filler: real catalog products chosen randomly — but weighted by
+    // priority so the core sqm items (wall stickers / sand-blast /
+    // perspex / wall guards / polymer wood / white board) show up far
+    // more often than niche fabric items like shamshonit.
+    const pool = [...catalog].sort((a, b) => {
+      const pa = PG_PRIORITY(a.it.name), pb = PG_PRIORITY(b.it.name);
+      // Shuffle within the same priority tier using a random jitter.
+      return (pb - pa) + (Math.random() - 0.5) * 0.5;
+    });
     for (const { it, cat } of pool) {
       if (productRows.length + tailPending.length >= maxRows) break;
       if (sum >= netTarget && productRows.length + tailPending.length >= minRows) break;
@@ -2052,17 +2081,36 @@ function buildPdfReplacementQuote(data) {
     : Array(productCount).fill(1 / productCount);
   while (weights.length < productCount) weights.push(1 / productCount);
 
-  // Candidate pool — sqm products only, so dimensions look realistic.
+  // Candidate pool — all sqm/length/unit products. Each item carries a
+  // priority weight (shared with the manual price generator) so "safe"
+  // products (wall stickers, sand-blast, perspex, wall guards, polymer
+  // wood, white board) show up far more often than niche items like
+  // shamshonit. length-type wall guards and unit-type catalog items
+  // are kept in the pool so they too can surface in the final quote.
   const pool = [];
   PRODUCTS.forEach(cat => {
     if (PG_EXCLUDED_CATEGORIES.has(cat.cat)) return;
     cat.items.forEach(it => {
       if (PG_EXCLUDED_NAMES.has(it.name)) return;
-      if (it.type !== 'sqm') return;
-      pool.push(it);
+      if (it.type !== 'sqm' && it.type !== 'length' && it.type !== 'unit') return;
+      pool.push({ it, weight: PG_PRIORITY(it.name) });
     });
   });
   if (!pool.length) return null;
+
+  // Pick a random item from the pool respecting weights. Optionally
+  // filter by a predicate (used so we don't double-pick items).
+  const pickFromPool = (predicate = () => true) => {
+    const candidates = pool.filter(p => predicate(p.it));
+    if (!candidates.length) return null;
+    const total = candidates.reduce((s, p) => s + p.weight, 0);
+    let r = Math.random() * total;
+    for (const p of candidates) {
+      r -= p.weight;
+      if (r <= 0) return p.it;
+    }
+    return candidates[candidates.length - 1].it;
+  };
 
   const productRows = [];
   const usedNames = new Set();
@@ -2080,18 +2128,13 @@ function buildPdfReplacementQuote(data) {
       : Math.max(50, productBudget - allocated);
     if (chunk <= 0) chunk = productBudget / productCount;
 
-    // Pick an unused catalog item when possible so the quote looks varied.
-    let candidates = pool.filter(p => !usedNames.has(p.name));
-    if (!candidates.length) candidates = pool;
-    const item = candidates[Math.floor(Math.random() * candidates.length)];
+    // Pick an unused catalog item, respecting priority weights. Falls
+    // back to any catalog item if everything's been used already.
+    let item = pickFromPool(it => !usedNames.has(it.name));
+    if (!item) item = pickFromPool(() => true);
+    if (!item) break;
     usedNames.add(item.name);
 
-    // Pick dimensions + qty so the row looks natural. We bias the qty
-    // bucket by chunk size (small chunk → qty 1-3, big chunk → qty up to
-    // 30) and then derive the per-unit width from the chunk, so a row
-    // reads like "15 stickers of 120×180 ס"מ" instead of "1 sticker of
-    // 150×3000 ס"מ". Widths stay in [20..800] ס"מ where possible.
-    const h = PG_SQM_HEIGHTS[Math.floor(Math.random() * PG_SQM_HEIGHTS.length)];
     const qtyBuckets = [
       { max: 500,      pool: [1, 1, 1, 2] },
       { max: 2000,     pool: [1, 2, 2, 3, 4] },
@@ -2101,36 +2144,62 @@ function buildPdfReplacementQuote(data) {
     ];
     const bucket = qtyBuckets.find(b => chunk <= b.max) || qtyBuckets[qtyBuckets.length - 1];
     let qty = bucket.pool[Math.floor(Math.random() * bucket.pool.length)];
-    const computeW = (q) => {
-      const unitArea = (chunk / q) / item.price;
-      return Math.round(unitArea * 10000 / h);
-    };
-    let w = computeW(qty);
-    // Nudge qty so w lands inside [20..600] ס"מ when possible. We allow
-    // qty to grow up to 50 before giving up — a cheap product against a
-    // big chunk needs many units so the widths stay human-sized.
-    let safety = 0;
-    while ((w < 20 || w > 600) && safety < 15) {
-      if (w < 20) qty = Math.max(1, qty - 1);
-      else        qty = Math.min(50, qty + Math.max(1, Math.ceil(qty * 0.3)));
-      if (qty >= 50 && w > 600) break;
-      w = computeW(qty);
-      safety++;
-    }
-    w = Math.max(10, Math.min(3000, w));
-    const rowTotal = item.price * (h * w / 10000) * qty;
-    allocated += rowTotal;
 
-    productRows.push({ product: item, height: String(h), width: String(w), qty: String(qty), notes: '' });
+    let row;
+    if (item.type === 'sqm') {
+      // Pick dimensions + qty so the row looks natural. Width stays in
+      // [20..600] ס"מ where possible — a row reads like "15 stickers of
+      // 120×180 ס"מ" instead of "1 sticker of 150×3000 ס"מ".
+      const h = PG_SQM_HEIGHTS[Math.floor(Math.random() * PG_SQM_HEIGHTS.length)];
+      const computeW = (q) => {
+        const unitArea = (chunk / q) / item.price;
+        return Math.round(unitArea * 10000 / h);
+      };
+      let w = computeW(qty);
+      let safety = 0;
+      while ((w < 20 || w > 600) && safety < 15) {
+        if (w < 20) qty = Math.max(1, qty - 1);
+        else        qty = Math.min(50, qty + Math.max(1, Math.ceil(qty * 0.3)));
+        if (qty >= 50 && w > 600) break;
+        w = computeW(qty);
+        safety++;
+      }
+      w = Math.max(10, Math.min(3000, w));
+      row = { product: item, height: String(h), width: String(w), qty: String(qty), notes: '' };
+    } else if (item.type === 'length') {
+      // Wall-guard style: fixed 20 ס"מ height, price per running metre.
+      // Length stored in `width` (ס"מ). qty × length should hit `chunk`.
+      const targetUnitPrice = chunk / qty;
+      let lengthCm = Math.round((targetUnitPrice / item.price) * 100);
+      // Clamp to a realistic running length per unit (30 ס"מ – 10 מ').
+      let safety = 0;
+      while ((lengthCm < 30 || lengthCm > 1000) && safety < 15) {
+        if (lengthCm < 30) qty = Math.max(1, qty - 1);
+        else              qty = Math.min(50, qty + Math.max(1, Math.ceil(qty * 0.3)));
+        if (qty >= 50 && lengthCm > 1000) break;
+        lengthCm = Math.round(((chunk / qty) / item.price) * 100);
+        safety++;
+      }
+      lengthCm = Math.max(20, Math.min(2000, lengthCm));
+      row = { product: item, height: '20', width: String(lengthCm), qty: String(qty), notes: '' };
+    } else { // type === 'unit'
+      // Flat per-unit price — scale qty so qty × price ≈ chunk.
+      let q = Math.max(1, Math.round(chunk / item.price));
+      q = Math.min(50, q);
+      row = { product: item, height: '', width: '', qty: String(q), notes: '' };
+    }
+
+    const rowTotal = calcRow(row).total;
+    allocated += rowTotal;
+    productRows.push(row);
   }
 
-  // ── Refinement pass: nudge the biggest row's width so the product
-  //    subtotal lands *just above* productBudget. We deliberately
-  //    over-shoot by a small buffer so the 'grand' source discount
-  //    applied later can clamp the total to the exact target — if the
-  //    sum ever fell below the target, the discount would clamp to 0
-  //    and we'd undershoot. The loop runs up to 4 times to converge
-  //    after each width clamp. ──
+  // ── Refinement pass: nudge the biggest sqm/length row's width so
+  //    the product subtotal lands *just above* productBudget. We
+  //    deliberately over-shoot by a small buffer so the 'grand' source
+  //    discount applied later can clamp the total to the exact target
+  //    — if the sum ever fell below the target, the discount would
+  //    clamp to 0 and we'd undershoot. ──
   const TARGET_BUFFER = 5;           // ₪, safety overshoot
   const refine = (iterations = 4) => {
     for (let i = 0; i < iterations; i++) {
@@ -2140,22 +2209,28 @@ function buildPdfReplacementQuote(data) {
       if (drift < 0.5 && drift >= -TARGET_BUFFER) return;  // already in range
       let target = null, targetTotal = -Infinity;
       for (const r of productRows) {
-        if (r.product.type !== 'sqm') continue;
+        if (r.product.type !== 'sqm' && r.product.type !== 'length') continue;
         const t = calcRow(r).total;
         if (t > targetTotal) { target = r; targetTotal = t; }
       }
       if (!target) return;
-      const h = parseFloat(target.height) || 50;
       const q = parseFloat(target.qty) || 1;
       const wanted = targetTotal + drift;
       if (wanted <= 0) return;
-      // Solve for width given the locked height × qty, ceil so we round
-      // UP — we'd rather be a shekel too high and have the discount
-      // trim it than a shekel too low and miss the target.
-      const newAreaM2 = wanted / target.product.price;
-      let newW = Math.ceil(newAreaM2 * 10000 / (h * q));
-      newW = Math.max(10, Math.min(5000, newW));
-      target.width = String(newW);
+      // Ceil so we round UP — we'd rather be a shekel too high and
+      // have the discount trim it than a shekel too low and miss.
+      if (target.product.type === 'sqm') {
+        const h = parseFloat(target.height) || 50;
+        const newAreaM2 = wanted / target.product.price;
+        let newW = Math.ceil(newAreaM2 * 10000 / (h * q));
+        newW = Math.max(10, Math.min(5000, newW));
+        target.width = String(newW);
+      } else { // length — fixed 20 ס"מ height, scale the width = length
+        const wantedLengthM = (wanted / q) / target.product.price;
+        let newW = Math.ceil(wantedLengthM * 100);
+        newW = Math.max(20, Math.min(5000, newW));
+        target.width = String(newW);
+      }
     }
   };
   refine();
