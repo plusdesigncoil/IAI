@@ -74,7 +74,8 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .company-info .company-name{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:2px;direction:rtl;text-align:right}
 .company-info .company-name span{color:var(--gray-400);font-weight:400}
 .company-info .info-row{display:flex;align-items:center;gap:6px;justify-content:flex-start}
-.company-info .info-icon{width:14px;text-align:center;color:var(--blue);font-size:11px}
+.company-info .info-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;color:var(--blue);flex-shrink:0}
+.company-info .info-icon svg{width:12px;height:12px}
 
 /* Quote Meta */
 .quote-meta{padding:20px 32px;display:grid;grid-template-columns:1fr 1fr;gap:12px 40px;border-bottom:1px solid var(--gray-200)}
@@ -173,11 +174,13 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .summary-divider{border:none;border-top:2px solid var(--ink);margin:8px 0}
 .summary-row.grand{font-size:16px;font-weight:800;padding:8px 0 0}
 .summary-row.grand .s-value{color:var(--blue-dark)}
-.discount-inline{display:inline-flex;align-items:center;gap:4px}
+.discount-inline{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
 .discount-inline input{
   width:55px;padding:3px 6px;border:1.5px solid var(--gray-200);
   border-radius:4px;font-family:inherit;font-size:13px;text-align:center;
 }
+.discount-inline input#discountInputILS{width:72px}
+.discount-inline .discount-sep{color:var(--gray-300);font-weight:400;margin:0 2px}
 .discount-inline input:focus{outline:none;border-color:var(--blue)}
 
 /* Modal */
@@ -385,6 +388,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .items-table thead th,.company-header,.items-table tbody tr:nth-child(even) td,
   .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .discount-inline input{border:none;font-weight:700;background:transparent}
+  .discount-inline .discount-sep{display:none!important}
 
   /* ── Company header ── */
   .company-header{flex-direction:row!important;padding:12px 20px 10px!important;align-items:flex-start!important;text-align:initial!important;border-bottom-width:2px!important}
@@ -515,11 +519,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
       </div>
       <div class="company-info">
         <div class="company-name">א.ג סטודיו פלוס דיזיין בע"מ <span>| ח.פ 515196079</span></div>
-        <div class="info-row"><span class="info-icon">🏠</span> <span>אברהם בומה שביט 1, ראשון לציון, יחידה D201</span></div>
-        <div class="info-row"><span class="info-icon">📞</span> <span>03-528-5003</span></div>
-        <div class="info-row"><span class="info-icon">💬</span> <span>054-558-7997</span></div>
-        <div class="info-row"><span class="info-icon">✉</span> <span>info@plusdesign.co.il</span></div>
-        <div class="info-row"><span class="info-icon">🌐</span> <span>www.plusdesign.co.il</span></div>
+        <div class="info-row"><span class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span> <span>אברהם בומה שביט 1, ראשון לציון, יחידה D201</span></div>
+        <div class="info-row"><span class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span> <span>03-528-5003</span></div>
+        <div class="info-row"><span class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2" ry="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg></span> <span>054-558-7997</span></div>
+        <div class="info-row"><span class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span> <span>info@plusdesign.co.il</span></div>
+        <div class="info-row"><span class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span> <span>www.plusdesign.co.il</span></div>
       </div>
     </div>
 
@@ -555,7 +559,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
       </div>
       <div class="meta-row" style="grid-column:1/-1">
         <span class="meta-label">תאריך</span>
-        <div class="meta-value" style="max-width:180px"><input id="metaDate" type="date" onchange="saveQuote()" style="text-align:left;direction:ltr"></div>
+        <div class="meta-value" style="max-width:180px"><input id="metaDate" type="date" onchange="saveQuote()" style="text-align:right;direction:rtl"></div>
       </div>
     </div>
 
@@ -611,7 +615,10 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
         <div class="summary-row discount">
           <span class="s-label">
             <span class="discount-inline">
-              הנחה <input type="number" id="discountInput" value="0" min="0" max="100" oninput="recalcSummary()"> %
+              הנחה
+              <input type="number" id="discountInput" value="0" min="0" max="100" step="0.1" oninput="onDiscountPctInput()"> %
+              <span class="discount-sep">|</span>
+              <span class="discount-ils-group no-print"><input type="number" id="discountInputILS" value="0" min="0" step="1" oninput="onDiscountILSInput()"> ₪</span>
             </span>
           </span>
           <span class="s-value" id="discountVal">₪0</span>
@@ -987,7 +994,28 @@ function recalcSummary() {
   document.getElementById('beforeVatVal').textContent = '₪'+fmt(afterDisc);
   document.getElementById('vatVal').textContent = '₪'+fmt(vat);
   document.getElementById('grandTotalVal').textContent = '₪'+fmt(grand);
+  // Keep the ILS mirror of the discount in sync, unless the user is
+  // actively typing in that field (don't fight their cursor).
+  const ilsEl = document.getElementById('discountInputILS');
+  if (ilsEl && document.activeElement !== ilsEl) {
+    ilsEl.value = Math.round(discountAmt);
+  }
   saveQuote();
+}
+
+// User edited the "%" box — % is already the source of truth, just recalc.
+function onDiscountPctInput() { recalcSummary(); }
+
+// User edited the "₪" box — convert to %, drive recalcSummary off that.
+function onDiscountILSInput() {
+  const ils = parseFloat(document.getElementById('discountInputILS').value) || 0;
+  let subtotal = 0;
+  quoteRows.forEach(row => { subtotal += calcRow(row).total; });
+  let pct = subtotal > 0 ? (ils / subtotal) * 100 : 0;
+  if (pct > 100) pct = 100;
+  if (pct < 0) pct = 0;
+  document.getElementById('discountInput').value = Math.round(pct * 100) / 100;
+  recalcSummary();
 }
 
 function deleteRow(idx) { quoteRows.splice(idx,1); renderTable(); saveQuote(); }
@@ -1005,6 +1033,8 @@ function clearAll() {
   document.getElementById('metaTitle').value = '';
   document.getElementById('metaQuoteNum').value = '';
   document.getElementById('discountInput').value = 0;
+  const ilsEl = document.getElementById('discountInputILS');
+  if (ilsEl) ilsEl.value = 0;
   renderTable();
   saveQuote();
 }
@@ -1018,7 +1048,29 @@ function doPrint() {
     setTimeout(() => { titleInput.classList.remove('required-empty'); titleInput.placeholder = 'תיאור הפרויקט (חובה)'; }, 3000);
     return;
   }
+
+  // The browser uses document.title as the default filename when the user
+  // picks "Save as PDF". We temporarily rewrite it so the saved file gets a
+  // meaningful name: "הצעה <num>" when there's a quote number, otherwise
+  // "הצעה <date> <user>".
+  const quoteNum = document.getElementById('metaQuoteNum').value.trim();
+  const metaDate = document.getElementById('metaDate').value || '';
+  const userName = currentUser && currentUser.name ? currentUser.name : '';
+
+  let filename;
+  if (quoteNum) {
+    filename = 'הצעה ' + quoteNum;
+  } else {
+    const parts = ['הצעה'];
+    if (metaDate) parts.push(metaDate);
+    if (userName) parts.push(userName);
+    filename = parts.join(' ');
+  }
+
+  const originalTitle = document.title;
+  document.title = filename;
   window.print();
+  setTimeout(() => { document.title = originalTitle; }, 1000);
 }
 
 // ── Product Picker ──
