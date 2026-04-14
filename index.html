@@ -3,7 +3,8 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2d5f8a">
 <title>הצעת מחיר — פלוס דיזיין</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -211,6 +212,144 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .detail-preview .dp-label{color:var(--gray-500)}
 .detail-preview .dp-value{font-weight:700;color:var(--green);font-size:15px}
 .modal-footer{padding:14px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-start;gap:10px}
+
+/* ══ MOBILE (≤ 768px) ══ */
+@media (max-width:768px){
+  body{font-size:14px}
+
+  /* Login */
+  .login-overlay{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .login-card{padding:36px 24px;max-width:92%}
+  .login-card svg{height:42px;margin-bottom:18px}
+  .login-card h2{font-size:16px}
+  .login-card p{font-size:12.5px;margin-bottom:20px}
+  .login-input{font-size:16px;padding:14px 16px;min-height:48px}
+  .login-btn{padding:14px;font-size:15px;min-height:48px}
+
+  /* Page */
+  .page-wrap{margin:0;padding:0;max-width:100%}
+  .quote-doc{border-radius:0;box-shadow:none}
+
+  /* Company header — stack vertically */
+  .company-header{
+    flex-direction:column;align-items:center;text-align:center;
+    gap:14px;padding:18px 16px 14px;
+  }
+  .company-logo{order:1!important}
+  .company-logo svg{height:42px}
+  .company-info{
+    order:2!important;width:100%;text-align:center;font-size:11.5px;line-height:1.6;
+  }
+  .company-info .company-name{text-align:center;font-size:14px;margin-bottom:4px}
+  .company-info .info-row{justify-content:center;flex-wrap:wrap;margin-bottom:2px}
+
+  /* Quote meta — single column */
+  .quote-meta{
+    grid-template-columns:1fr;padding:14px 16px;gap:12px;
+  }
+  .meta-row{gap:10px}
+  .meta-label{min-width:68px;font-size:11.5px}
+  .meta-value input{font-size:16px;padding:8px 4px;min-height:38px}
+  .meta-value input[type="date"]{min-height:38px;font-size:15px}
+
+  /* Actions bar */
+  .actions-bar{
+    padding:12px 14px;flex-wrap:wrap;gap:8px;
+    position:sticky;top:0;z-index:50;background:var(--gray-50);
+  }
+  .actions-bar .spacer{display:none}
+  .actions-bar .btn{
+    flex:1 1 auto;min-height:42px;font-size:13px;padding:10px 12px;
+    justify-content:center;
+  }
+  .actions-bar .btn-blue{flex-basis:100%;order:-1}
+  .actions-bar .btn-sm{flex:0 1 auto;font-size:12px;padding:10px 12px}
+
+  /* Items table → card layout */
+  .items-section{padding:12px;background:var(--gray-100)}
+  .items-table{background:transparent}
+  .items-table thead{display:none}
+  .items-table,
+  .items-table tbody,
+  .items-table tr,
+  .items-table td{display:block;width:auto}
+  .items-table tbody tr,
+  .items-table tbody tr:nth-child(even){
+    background:var(--white);border:1px solid var(--gray-200);
+    border-radius:10px;margin-bottom:12px;padding:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.04);
+  }
+  .items-table tbody tr:hover td,
+  .items-table tbody tr:nth-child(even):hover td{background:transparent}
+  .items-table tbody td{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:6px 0;border:none;text-align:right;font-size:13px;
+    min-height:28px;
+  }
+  .items-table tbody td::before{
+    content:attr(data-label);font-weight:600;color:var(--gray-500);
+    font-size:11.5px;padding-left:10px;white-space:nowrap;
+  }
+  .items-table tbody td[data-label=""]::before{content:none}
+  .items-table tbody td.row-num{display:none}
+  .items-table tbody td.item-name{
+    display:block;font-size:15px;font-weight:700;color:var(--ink);
+    padding:0 0 10px;margin-bottom:8px;border-bottom:1px solid var(--gray-100);
+    max-width:none;text-align:right;
+  }
+  .items-table tbody td.item-name::before{content:none}
+  .items-table tbody td.notes-cell{max-width:none;font-size:12px}
+  .items-table tbody td.notes-cell:empty{display:none}
+  .items-table tbody td.num-cell:empty{display:none}
+  .items-table tbody td.row-actions-cell{
+    padding-top:10px;margin-top:8px;
+    border-top:1px solid var(--gray-100);justify-content:flex-end;
+  }
+  .items-table tbody td.row-actions-cell::before{content:none}
+  .items-table .row-actions{gap:6px}
+  .items-table .row-btn,
+  .items-table .del-btn{
+    padding:10px 12px;font-size:16px;min-width:40px;min-height:40px;
+    border:1px solid var(--gray-200);border-radius:6px;background:var(--white);
+  }
+  .items-table .del-btn{color:var(--red)}
+
+  .empty-table{padding:32px 16px}
+  .empty-table .empty-icon{font-size:30px}
+
+  /* Summary */
+  .summary-section{padding:16px;justify-content:stretch}
+  .summary-box{min-width:0;width:100%}
+  .summary-row{font-size:13px}
+  .summary-row.grand{font-size:15px}
+
+  /* Modals — near fullscreen */
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal{
+    width:100%;max-width:100%;max-height:100vh;height:100vh;
+    border-radius:0;
+  }
+  .modal-header{padding:14px 16px}
+  .modal-header h3{font-size:14px}
+  .modal-body{padding:14px 16px}
+  .modal-footer{padding:12px 16px;gap:8px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  .modal-footer .btn{flex:1;min-height:46px;justify-content:center;font-size:14px}
+  .modal-search{font-size:16px;min-height:46px;padding:12px 14px}
+  .product-item{padding:12px 10px;font-size:13px}
+  .product-item .p-meta{gap:8px;font-size:11px}
+  .detail-form{grid-template-columns:1fr;gap:10px}
+  .detail-group input,.detail-group textarea{font-size:16px;padding:11px 12px;min-height:44px}
+  .detail-preview{padding:14px 16px;font-size:14px}
+  .detail-preview .dp-value{font-size:17px}
+}
+
+/* ══ SMALL MOBILE (≤ 400px) ══ */
+@media (max-width:400px){
+  .actions-bar .btn{font-size:12px;padding:9px 10px}
+  .items-table tbody tr,
+  .items-table tbody tr:nth-child(even){padding:12px}
+  .meta-label{min-width:60px}
+}
 
 @media print{
   body{background:#fff}
@@ -647,20 +786,21 @@ function renderTable() {
   tbody.innerHTML = quoteRows.map((row, i) => {
     const c = calcRow(row);
     const isSqm = row.product.type === 'sqm';
+    const sqmCell = c.sqm > 0 ? c.sqm.toFixed(2) : (row.product.type==='fixed'?'0':'');
     return `<tr>
-      <td class="row-num">${i+1}</td>
+      <td class="row-num" data-label="#">${i+1}</td>
       <td class="item-name">${row.product.name}</td>
-      <td class="num-cell"><span class="contract-badge">${row.product.contract}</span></td>
-      <td>${row.product.unit}</td>
-      <td class="num-cell money">${fmt(row.product.price)}</td>
-      <td class="num-cell">${isSqm && row.height ? row.height : ''}</td>
-      <td class="num-cell">${isSqm && row.width ? row.width : ''}</td>
-      <td class="num-cell">${row.qty || ''}</td>
-      <td class="num-cell">${c.sqm > 0 ? c.sqm.toFixed(2) : (row.product.type==='fixed'?'0':'')}</td>
-      <td class="num-cell money">${c.total > 0 ? fmt(c.unitPrice) : ''}</td>
-      <td class="num-cell total-cell">${c.total > 0 ? fmt(c.total) : ''}</td>
-      <td class="notes-cell">${row.notes || ''}</td>
-      <td class="no-print"><div class="row-actions">
+      <td class="num-cell" data-label="סעיף"><span class="contract-badge">${row.product.contract}</span></td>
+      <td data-label="יחידה">${row.product.unit}</td>
+      <td class="num-cell money" data-label="מחיר יח׳">${fmt(row.product.price)}</td>
+      <td class="num-cell" data-label='גובה (ס"מ)'>${isSqm && row.height ? row.height : ''}</td>
+      <td class="num-cell" data-label='רוחב (ס"מ)'>${isSqm && row.width ? row.width : ''}</td>
+      <td class="num-cell" data-label="כמות">${row.qty || ''}</td>
+      <td class="num-cell" data-label='מ"ר'>${sqmCell}</td>
+      <td class="num-cell money" data-label="מחיר">${c.total > 0 ? fmt(c.unitPrice) : ''}</td>
+      <td class="num-cell total-cell" data-label='סה"כ'>${c.total > 0 ? fmt(c.total) : ''}</td>
+      <td class="notes-cell" data-label="הערות">${row.notes || ''}</td>
+      <td class="no-print row-actions-cell"><div class="row-actions">
         <button class="row-btn" title="ערוך" onclick="editRow(${i})">✎</button>
         <button class="row-btn" title="שכפל" onclick="duplicateRow(${i})">⎘</button>
         <button class="del-btn" title="מחק" onclick="deleteRow(${i})">✕</button>
@@ -763,8 +903,8 @@ function openDetailModal(initial) {
   const widthVal = init.width != null ? init.width : '';
   const notesVal = init.notes != null ? init.notes : '';
   document.getElementById('detailForm').innerHTML=`
-    <div class="detail-group"><label>סעיף בחוזה</label><input class="readonly" value="${p.contract}" readonly></div>
-    <div class="detail-group"><label>יחידת מידה</label><input class="readonly" value="${p.unit}" readonly></div>
+    <div class="detail-group"><label>סעיף בחוזה</label><input class="readonly" value="${escAttr(p.contract)}" readonly></div>
+    <div class="detail-group"><label>יחידת מידה</label><input class="readonly" value="${escAttr(p.unit)}" readonly></div>
     <div class="detail-group"><label>מחיר ל${p.unit||'יחידה'}</label><input class="readonly" value="₪${fmt(p.price)}" readonly></div>
     <div class="detail-group"><label>כמות</label><input type="number" id="dQty" min="0" step="1" value="${escAttr(qtyVal)}" oninput="updateDetailPreview()"></div>
     ${isSqm?`
