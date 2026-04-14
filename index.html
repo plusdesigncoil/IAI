@@ -139,7 +139,16 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 .items-table .row-num{text-align:center;color:var(--gray-400);font-weight:600;width:30px}
 .items-table .item-name{font-weight:500;max-width:200px}
 .items-table .item-name-title{display:block}
-.items-table .item-name-notes{display:none}
+/* Notes now render inline under the item name — matches the print
+   layout, so the notes column and the inline note stay in sync. */
+.items-table .item-name-notes{display:block;font-size:11px;color:var(--gray-500);font-weight:400;margin-top:2px;line-height:1.3}
+/* Desktop screen: the standalone הערות column is hidden — notes now
+   render inline under the item name (same as print). Mobile (card
+   layout) still shows the notes cell via data-label in its own row. */
+@media screen and (min-width:769px){
+  .items-table thead th:last-child,
+  .items-table tbody td.notes-cell{display:none!important}
+}
 .items-table .contract-badge{
   display:inline-block;background:var(--blue-light);color:var(--blue-dark);
   font-weight:700;font-size:11px;padding:1px 7px;border-radius:3px;
@@ -206,6 +215,9 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
 }
 .s-inline-input{width:100px}
 .s-pct-input{width:60px;text-align:center;direction:ltr}
+/* The "(0.03%)" group needs a fresh LTR bidi context so the
+   parentheses land on the outside in Hebrew RTL surroundings. */
+.s-pct-group{direction:ltr;unicode-bidi:isolate;display:inline-block;white-space:nowrap}
 .s-inline-input:hover,.s-pct-input:hover{border-color:var(--gray-400);background:#fff}
 .s-inline-input:focus,.s-pct-input:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 2px rgba(68,130,196,.15)}
 .s-inline-input::-webkit-outer-spin-button,
@@ -364,8 +376,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
     max-width:none;text-align:right;
   }
   .items-table tbody td.item-name::before{content:none}
-  .items-table tbody td.notes-cell{max-width:none;font-size:12px}
+  .items-table tbody td.notes-cell{max-width:none;font-size:12px;display:flex}
   .items-table tbody td.notes-cell:empty{display:none}
+  /* On mobile, notes are shown as their own card row with a data-label,
+     so the inline copy under the item name is hidden to avoid dupes. */
+  .items-table .item-name-notes{display:none}
   .items-table tbody td.num-cell:empty{display:none}
   .items-table tbody td.row-actions-cell{
     padding-top:10px;margin-top:8px;
@@ -429,7 +444,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .detail-preview,.contract-badge,.user-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .required-star{display:none!important}
   .summary-row.discount.is-zero{display:none!important}
-  .s-pct-input{border:none!important;background:transparent!important;padding:0!important;width:34px!important;font-weight:700!important;box-shadow:none!important;text-align:center!important}
+  /* In print the pct input is replaced by a static span so the
+     "(0.05%)" group renders as plain text with the parens in the
+     correct visual order — the input is a strong LTR element and
+     was fighting the surrounding Hebrew bidi when inlined. */
+  .s-pct-input,
   .s-inline-input{display:none!important}
   .s-print-value{display:inline!important;color:inherit;font-weight:inherit}
 
@@ -541,11 +560,12 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
   .summary-row .s-value,
   .summary-row.discount .s-value,
   .summary-row.rounding-row .s-value{color:#000!important}
-  /* Discount row: cluster the הנחה label + percent + ILS amount into a
-     single cluster on the start (right) side of the box. Without this
-     the space-between layout splits them to opposite edges and the
-     amount reads as disconnected from the label. */
-  .summary-row.discount{justify-content:flex-start!important;gap:4px!important}
+  /* Discount row keeps the label+%+sign+₪ clustered on the right side
+     and pushes the number to the left edge so it lines up with every
+     other summary amount (סה"כ / לפני מע"מ / מע"מ / כולל מע"מ). */
+  .summary-row.discount .s-label{display:inline-flex!important;align-items:baseline!important;gap:2px!important}
+  .summary-row.discount .s-neg,
+  .summary-row.discount .s-currency{display:inline!important}
   .summary-row.grand{font-size:12px!important;padding:5px 0 0!important}
   .summary-row.grand .s-label,
   .summary-row.grand .s-value{color:var(--blue-dark)!important;font-weight:800!important}
@@ -706,10 +726,11 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
         </div>
         <div class="summary-row discount">
           <span class="s-label">
-            הנחה <input type="text" inputmode="decimal" id="discountInput" class="s-pct-input" value="0" onfocus="onInlineFocus(event)" onblur="onInlineBlur(event)" oninput="onDiscountPctInput()"> %
+            הנחה <span class="s-pct-group">(<input type="text" inputmode="decimal" id="discountInput" class="s-pct-input" value="0" onfocus="onInlineFocus(event)" onblur="onInlineBlur(event)" oninput="onDiscountPctInput()"><span class="s-print-value s-pct-print" id="discountPctPrint">0</span>%)</span>
+            <span class="s-neg">-</span>
           </span>
           <span class="s-value">
-            <span class="s-neg">-</span><span class="s-currency">₪</span><input type="text" inputmode="decimal" id="discountInputILS" class="s-inline-input" value="0" onfocus="onInlineFocus(event)" onblur="onInlineBlur(event)" oninput="onDiscountILSInput()"><span class="s-print-value" id="discountPrint">0</span>
+            <span class="s-currency">₪</span><input type="text" inputmode="decimal" id="discountInputILS" class="s-inline-input" value="0" onfocus="onInlineFocus(event)" onblur="onInlineBlur(event)" oninput="onDiscountILSInput()"><span class="s-print-value" id="discountPrint">0</span>
           </span>
         </div>
         <div class="summary-row">
@@ -1290,6 +1311,7 @@ function recalcSummary() {
   // Print mirrors — display-only spans used in place of the inputs in print
   // so totals show with thousand separators and the same fmtMoney treatment
   // as every other summary line.
+  document.getElementById('discountPctPrint').textContent = pct === 0 ? '0' : (Math.round(pct * 100) / 100).toLocaleString('he-IL');
   document.getElementById('discountPrint').textContent = fmtMoney(discountAmt);
   document.getElementById('beforeVatPrint').textContent = fmtMoney(preVat);
   document.getElementById('grandTotalPrint').textContent = fmtMoney(grand);
