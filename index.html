@@ -678,7 +678,7 @@ body{font-family:'Heebo',sans-serif;background:var(--gray-100);color:var(--ink);
     <!-- Actions -->
     <div class="actions-bar no-print">
       <button class="btn btn-blue" onclick="openProductPicker()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> הוסף מוצר</button>
-      <button class="btn btn-outline" onclick="openPriceGen()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg> ייצר לפי מחיר</button>
+      <button class="btn btn-outline" id="pgBtn" onclick="openPriceGen()" style="display:none"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg> ייצר לפי מחיר</button>
       <button class="btn btn-outline" onclick="triggerPdfUpload()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> העלה PDF</button>
       <span class="spacer"></span>
       <button class="btn btn-outline" onclick="doPrint()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> הדפסה/שמירה</button>
@@ -857,6 +857,8 @@ const USERS = {
   '59dc77e0b06b63c70d52470a6a6e4e0d403e66e5876fa77dc48492571da47395': 'ענת תובל',
   '9651fe593aca8afd1edfebcbaaf6a04628c9dc829da70879424f691013b5450b': 'אביעד מעודד',
   '29ed0e24ff422c9a779a3045989818487510b579fdb1f153ef74e18999514abe': 'אור פרנדר',
+  'd992e3237695b369bf6f7bdb472974e61507d01a9e4371e5f7a518dfb2675c8b': 'מירי כהן',
+  '108c7b68713b21687625d5f209bdffbd4ccd62e3b5cada767cc30276f1055dd5': 'אדמין',
 };
 
 let currentUser = null;
@@ -927,6 +929,15 @@ function enterApp(name) {
   document.getElementById('userName').textContent = name;
   document.getElementById('topbarUserName').textContent = name;
   document.getElementById('metaDate').valueAsDate = new Date();
+  
+  // Restricted features: Generate by Price (pgBtn)
+  const pgBtn = document.getElementById('pgBtn');
+  if (pgBtn) pgBtn.style.display = (name === 'אור פרנדר' || name === 'אדמין') ? 'inline-flex' : 'none';
+
+  // Hide User Badge for Admin
+  const badge = document.getElementById('userBadge');
+  if (badge) badge.style.display = (name === 'אדמין') ? 'none' : 'inline-flex';
+
   loadQuote();
   renderTable();
 }
@@ -985,72 +996,196 @@ document.getElementById('loginPhone').addEventListener('keydown', e => {
 // Prices are stored XOR-encoded with _PK so raw values are not visible in source.
 const _PK = 0xBEEF;
 const _p = n => n ^ _PK;
+
 const PRODUCTS = [
-  { cat:"מדבקות", items:[
-    { name:"מדבקת קיר - טקסטורה מחוספס", contract:1, unit:'מ"ר', price:48809, type:"sqm" },
-    { name:"מדבקת קיר - טקסטורה בטון", contract:2, unit:'מ"ר', price:48779, type:"sqm" },
-    { name:"מדבקת קיר - וניל גב אפור", contract:3, unit:'מ"ר', price:48834, type:"sqm" },
-    { name:"הדפסה צבעונית איכותית על וניל למינציה מט", contract:4, unit:'מ"ר', price:48851, type:"sqm" },
-    { name:"מדבקת התזת חול", contract:29, unit:'מ"ר', price:48809, type:"sqm" },
-    { name:"מדבקת התזת חול כולל הדפסה", contract:30, unit:'מ"ר', price:48779, type:"sqm" },
-    { name:"תוספת חיתוך צורני למדבקת התזת חול + אפליקיישן", contract:31, unit:'מ"ר', price:48791, type:"sqm" },
-    { name:"חיתוך צורני מדבקת אורקל (מדבקת קילוף אותיות)", contract:23, unit:'מ"ר', price:48779, type:"sqm" },
-    { name:"מדבקת ריצפה עמידות גבוהה בשחיקה", contract:32, unit:'מ"ר', price:48779, type:"sqm" },
-  ]},
-  { cat:"קשיחים", items:[
-    { name:"הדפסה על OSB עובי 12 מ\"מ", contract:12, unit:'מ"ר', price:48923, type:"sqm" },
-    { name:"הדפסה על זכוכית כולל מרחיקי ניקל, גב אטום, גימור ליטוש יהלום וחיסום", contract:10, unit:'מ"ר', price:48329, type:"sqm" },
-    { name:"הדפסה על פרספקס 5 מ\"מ", contract:11, unit:'מ"ר', price:48329, type:"sqm" },
-    // length-type: height is fixed at 20 ס"מ, price is per running meter
-    { name:"מגן קיר פרספקס שקוף", contract:33, unit:'מ"א (גובה 20 ס"מ)', price:48821, type:"length" },
-    { name:"תוספת הדפסה למגן קיר", contract:34, unit:'מ"א (גובה 20 ס"מ)', price:48861, type:"length" },
-  ]},
   { cat:"בדים", items:[
-    { name:"הדפסה על שמשונית (כולל גימור וטבעות)", contract:7, unit:'מ"ר', price:48861, type:"sqm" },
-    { name:"הדפסה על קנבס", contract:13, unit:'מ"ר', price:49121, type:"sqm" },
+    { name:"שמשונית", contract:1.1, unit:"מ\"ר", price:48846, type:"sqm" },
+    { name:"בד סאטן איכותי אטום", contract:1.2, unit:"מ\"ר", price:48831, type:"sqm" },
+    { name:"דגל בד סאטן איכותי אטום עם קרשים לתליה ועיגון", contract:1.3, unit:"מ\"ר", price:48821, type:"sqm" },
+    { name:"דגל בד סאטן איכותי אטום עם קרשים לתליה ועיגון 125X430 ס\"מ", contract:"1.3 (ב)", unit:"יחידה", price:48907, type:"unit" },
+    { name:"בד קנבס + מתיחה על מסגרת עץ", contract:1.4, unit:"מ\"ר", price:48761, type:"sqm" },
   ]},
-  { cat:"טפט לדלת", items:[
-    { name:"טפט לדלת מחוספס לבן", contract:5, unit:'מ"ר', price:48861, type:"sqm" },
-    { name:"טפט לדלת מחוספס מודפס", contract:6, unit:'מ"ר', price:48809, type:"sqm" },
+  { cat:"לייטבוקס", items:[
+    { name:"בד לייטבוקס 251X301 ס\"מ", contract:2.1, unit:"יחידה", price:48485, type:"unit" },
+    { name:"בד לייטבוקס 251X101 ס\"מ", contract:2.2, unit:"יחידה", price:49119, type:"unit" },
+    { name:"בד לייטבוקס ", contract:2, unit:"מ\"ר", price:48791, type:"sqm" },
   ]},
-  { cat:"פרספקס + תלייה", items:[
-    { name:"הדפסה על פרספקס 5 מ\"מ כולל תלייה סט ספייסרים", contract:11, unit:'מ"ר', price:48329, type:"sqm" },
+  { cat:"מדבקות", items:[
+    { name:"וניל מקטלוג - לבן/שקוף/שחור/צבעוני", contract:3.1, unit:"מ\"ר", price:48834, type:"sqm" },
+    { name:"וניל לבן טקסטורי - מחוספס", contract:3.2, unit:"מ\"ר", price:48809, type:"sqm" },
+    { name:"מדבקת פרימיום קוינטק מודפסת", contract:3.3, unit:"מ\"ר", price:48779, type:"sqm" },
+    { name:"מדבקת רצפה", contract:3.4, unit:"מ\"ר", price:48831, type:"sqm" },
+    { name:"מדבקת התזת חול (סטנדרט) *", contract:3.5, unit:"מ\"ר", price:48809, type:"sqm" },
+    { name:"תוספת למדבקות בחיתוך צורני", contract:3.6, unit:"מ\"ר", price:48821, type:"sqm" },
   ]},
-  { cat:"לוגו / אותיות", items:[
-    { name:"חיתוך אותיות PVC מוקצף צביעה בתנור, עובי 10 מ\"מ + הרחקה", contract:24, unit:"רוחב 100 ס\"מ", price:48391, type:"unit" },
-    { name:"חיתוך אותיות פרספקס צביעה, עובי 6 מ\"מ + הרחקה", contract:19, unit:"רוחב 100 ס\"מ", price:47779, type:"unit" },
-    { name:"חיתוך אותיות פרספקס צביעה, עובי 10 מ\"מ + הרחקה", contract:20, unit:"רוחב 100 ס\"מ", price:48123, type:"unit" },
-    { name:'אותיות מוארות לוגו תע"ש פרספקס 60 מ"מ, הילה אחורית', contract:21, unit:"רוחב 100 ס\"מ", price:42891, type:"unit" },
-    { name:'אותיות מוארות לוגו תע"ש פרספקס 60 מ"מ, הילה חזיתית', contract:22, unit:"רוחב 100 ס\"מ", price:45391, type:"unit" },
+  { cat:"מדבקות לדלת", items:[
+    { name:"וניל מחוספס לבן לדלת 105X210 ס\"מ", contract:4.1, unit:"יחידה", price:48769, type:"unit" },
+    { name:"וניל מחוספס מודפס לדלת 105X210 ס\"מ", contract:4.2, unit:"יחידה", price:48761, type:"unit" },
   ]},
-  { cat:"רולאפים", items:[
-    { name:"רולאפ 85×200", contract:14, unit:"יחידה", price:48719, type:"unit" },
-    { name:"רולאפ 100×200", contract:15, unit:"יחידה", price:48661, type:"unit" },
-    { name:"רולאפ 120×200", contract:16, unit:"יחידה", price:49073, type:"unit" },
-    { name:"רולאפ 150×200", contract:17, unit:"יחידה", price:48923, type:"unit" },
-    { name:"רולאפ 150×200 (דו צדדי)", contract:18, unit:"יחידה", price:48129, type:"unit" },
+  { cat:"למינציה", items:[
+    { name:"למינציה רגילה מט/מבריק", contract:5.1, unit:"מ\"ר", price:48864, type:"sqm" },
   ]},
-  { cat:"מוצרים", items:[
-    { name:"פסי עץ פולימר", contract:35, unit:"יחידה 16×250 ס\"מ", price:48761, type:"unit" },
-    { name:"לוח מחיק זכוכית + הרחקה + מגש טושים", contract:25, unit:"150×100", price:48443, type:"unit" },
+  { cat:"קאפה", items:[
+    { name:"קאפה קוריאנית + דבק 100X70 ס\"מ", contract:6.1, unit:"יחידה", price:48889, type:"unit" },
+    { name:"הדפסה על קאפה 10 מ\"מ", contract:6.2, unit:"מ\"ר", price:48779, type:"sqm" },
+    { name:"הדפסה על קאפה 5 מ\"מ", contract:6.3, unit:"מ\"ר", price:48816, type:"sqm" },
+    { name:"קאפה לבנה 10 מ\"מ  -  ללא הדפסה", contract:6.4, unit:"מ\"ר", price:48886, type:"sqm" },
+    { name:"קאפה לבנה 5 מ\"מ  -  ללא הדפסה", contract:6.5, unit:"מ\"ר", price:48891, type:"sqm" },
+    { name:"תוספת לחיתוך צורני קאפה", contract:6.6, unit:"מ\"ר", price:48809, type:"sqm" },
   ]},
-  { cat:"שילוט מואר", items:[
-    { name:"שילוט אותיות מואר 60 מ\"מ - אות 1-20 ס\"מ", contract:26, unit:"אות", price:48923, type:"unit" },
-    { name:"שילוט אותיות מואר 60 מ\"מ - אות 21-30 ס\"מ", contract:27, unit:"אות", price:48311, type:"unit" },
-    { name:"שילוט אותיות מואר 60 מ\"מ - אות 31-50 ס\"מ", contract:28, unit:"אות", price:48391, type:"unit" },
+  { cat:"פרספקט", items:[
+    { name:"הדפסה על פרספקס 2 מ\"מ (שקוף / לבן מבריק)", contract:7.1, unit:"מ\"ר", price:48661, type:"sqm" },
+    { name:"הדפסה על פרספקס 3 מ\"מ (שקוף / לבן מבריק)", contract:7.2, unit:"מ\"ר", price:49091, type:"sqm" },
+    { name:"הדפסה על פרספקס 4 מ\"מ (שקוף / לבן מבריק)", contract:7.3, unit:"מ\"ר", price:49073, type:"sqm" },
+    { name:"הדפסה על פרספקס 5 מ\"מ (שקוף / לבן מבריק)", contract:7.4, unit:"מ\"ר", price:49023, type:"sqm" },
+    { name:"תוספת חיתוך צורני כל 1 מ\"מ", contract:7.5, unit:"מ\"ר", price:48886, type:"sqm" },
   ]},
-  { cat:"אספקה / התקנה", items:[
-    { name:"מינימום התקנה - מתקין 1 (עד שעתיים)", contract:"X", unit:"", price:49073, type:"fixed" },
-    { name:"מינימום התקנה - 2 מתקינים (עד שעתיים)", contract:"X", unit:"", price:48311, type:"fixed" },
-    { name:"יום עבודה - מתקין 1 (8.5 שעות)", contract:"X", unit:"", price:47923, type:"fixed" },
-    { name:"יום עבודה - 2 מתקינים (8.5 שעות)", contract:"X", unit:"", price:46891, type:"fixed" },
-    { name:"התקנת מדבקות", contract:"X", unit:'מ"ר', price:48851, type:"sqm" },
-    { name:"התקנת הזת חול", contract:"X", unit:'מ"ר', price:48809, type:"sqm" },
+  { cat:"שונות", items:[
+    { name:"הדפסה על אלוקובונד 3 מ\"מ מוברש/מראה", contract:8.1, unit:"מ\"ר", price:48661, type:"sqm" },
+    { name:"הדפסה על אלוקובונד 3 מ\"מ", contract:8.2, unit:"מ\"ר", price:48761, type:"sqm" },
+    { name:"הדפסה על עץ סנדוויץ 12 מ\"מ", contract:8.4, unit:"מ\"ר", price:49023, type:"sqm" },
+    { name:"פסי עץ פולימר 16X280 ס\"מ", contract:8.5, unit:"יחידה", price:48761, type:"unit" },
   ]},
-  { cat:"עיצוב גרפי", items:[
-    { name:"שעות עיצוב", contract:"X", unit:"שעה", price:48761, type:"unit" },
+  { cat:"חיתוך צורני", items:[
+    { name:"חיתוך צורני שולחן עובי 1-5 מ\"מ", contract:9.1, unit:"מ\"ר", price:48851, type:"sqm" },
+  ]},
+  { cat:"מסגור", items:[
+    { name:"מסגרת אלומיניום קונסטרוקציה לשלט 28X28 מ\"מ", contract:10.1, unit:"מטר רץ", price:48861, type:"length" },
+    { name:"מסגרת אלומיניום לקאפה כסוף", contract:10.2, unit:"מטר רץ", price:48839, type:"length" },
+    { name:"מסגרת אלומיניום לקאפה מראה/שחור/לבן", contract:10.3, unit:"מטר רץ", price:48861, type:"length" },
+    { name:"מסגרת עץ לקנבס + מתיחה", contract:10.4, unit:"מטר רץ", price:48809, type:"length" },
+    { name:"מסגרת תלייה נסתרת אלומיניום", contract:10.5, unit:"מטר רץ", price:48839, type:"length" },
+    { name:"מסגרת תלייה נסתרת עץ", contract:10.6, unit:"מטר רץ", price:48881, type:"length" },
+  ]},
+  { cat:"זכוכית", items:[
+    { name:"תמונה זכוכית 30X30", contract:11.1, unit:"יחידה", price:48791, type:"unit" },
+    { name:"תמונה זכוכית 40X30", contract:11.2, unit:"יחידה", price:48761, type:"unit" },
+    { name:"תמונה זכוכית 40X40", contract:11.3, unit:"יחידה", price:48679, type:"unit" },
+    { name:"תמונה זכוכית 50X50", contract:11.4, unit:"יחידה", price:48661, type:"unit" },
+    { name:"תמונה זכוכית 60X40", contract:11.5, unit:"יחידה", price:49091, type:"unit" },
+    { name:"תמונה זכוכית 70X50", contract:11.6, unit:"יחידה", price:49073, type:"unit" },
+  ]},
+  { cat:"מסגרות", items:[
+    { name:"תמונה ממוסגרת עם זכוכית A3", contract:12.1, unit:"יחידה", price:48851, type:"unit" },
+    { name:"תמונה ממוסגרת עם זכוכית A4", contract:12.2, unit:"יחידה", price:48839, type:"unit" },
+    { name:"תמונה ממוסגרת עם פרספקס 40X50", contract:12.3, unit:"יחידה", price:48831, type:"unit" },
+    { name:"תמונה ממוסגרת עם פרספקס 50X50", contract:12.4, unit:"יחידה", price:48779, type:"unit" },
+    { name:"תמונה ממוסגרת עם פרספקס 50X70", contract:"12.4 (ב)", unit:"יחידה", price:48761, type:"unit" },
+    { name:"תמונה ממוסגרת עם פרספקס 64X71", contract:12.5, unit:"יחידה", price:48679, type:"unit" },
+    { name:"תמונה ממוסגרת עם פרספקס 61X91", contract:12.6, unit:"יחידה", price:48661, type:"unit" },
+    { name:"תמונה ממוסגרת עם פרספקס 70X100", contract:12.7, unit:"יחידה", price:49091, type:"unit" },
+    { name:"זכוכית מודפסת מידה סטנדרט + ספייסרים 60*80", contract:12.8, unit:"יחידה", price:48761, type:"unit" },
+    { name:"זכוכית מודפסת מידה סטנדרט + ספייסרים 60*90", contract:"12.8 (ב)", unit:"יחידה", price:49091, type:"unit" },
+    { name:"זכוכית מודפסת מידה סטנדרט + ספייסרים 50*70", contract:12.9, unit:"יחידה", price:48661, type:"unit" },
+  ]},
+  { cat:"מגן", items:[
+    { name:"15 בלוקים פרספקס 18*13 עובי מ\"מ", contract:13.1, unit:"יחידה", price:48791, type:"unit" },
+    { name:"15 בלוקים פרספקס 15*10 עובי מ\"מ", contract:13.2, unit:"יחידה", price:48761, type:"unit" },
+    { name:"15 בלוקים פרספקס25 *20 עובי מ\"מ", contract:13.3, unit:"יחידה", price:48731, type:"unit" },
+    { name:"מגן הוקרה מפרספקט כולל מעמד עץ 20/15 ס\"מ", contract:13.4, unit:"יחידה", price:48679, type:"unit" },
+  ]},
+  { cat:"מתקני תצוגה מודפסים", items:[
+    { name:"רולאפ לייט 85X200", contract:14.1, unit:"יחידה", price:48791, type:"unit" },
+    { name:"רולאפ לייט 100X200", contract:14.2, unit:"יחידה", price:48731, type:"unit" },
+    { name:"רולאפ לייט 120X200", contract:14.3, unit:"יחידה", price:49091, type:"unit" },
+    { name:"רולאפ לייט 150X200", contract:14.4, unit:"יחידה", price:48941, type:"unit" },
+    { name:"רולאפ לייט 200X200", contract:14.5, unit:"יחידה", price:48129, type:"unit" },
+    { name:"פופ אפ מגנטי 3X3 פנלים", contract:14.6, unit:"יחידה", price:44391, type:"unit" },
+    { name:"פופ אפ מגנטי 3X4 פנלים", contract:14.7, unit:"יחידה", price:43423, type:"unit" },
+    { name:" מתקן לדגל סיני, חד צדדי משתקף 2 מטר", contract:14.8, unit:"יחידה", price:48311, type:"unit" },
+    { name:" מתקן לדגל סיני, חד צדדי משתקף 2.8 מטר", contract:14.9, unit:"יחידה", price:48311, type:"unit" },
+    { name:" מתקן לדגל סיני, חד צדדי משתקף 3 מטר", contract:14.1, unit:"יחידה", price:48311, type:"unit" },
+    { name:" מתקן לדגל סיני, חד צדדי משתקף 3.5 מטר", contract:14.11, unit:"יחידה", price:48311, type:"unit" },
+    { name:" מתקן לדגל סיני, חד צדדי משתקף 4 מטר", contract:14.12, unit:"יחידה", price:48311, type:"unit" },
+    { name:" מתקן לדגל סיני, חד צדדי משתקף 4.5 מטר", contract:14.13, unit:"יחידה", price:48311, type:"unit" },
+    { name:"כן ציור מעץ", contract:14.14, unit:"יחידה", price:48769, type:"unit" },
+    { name:"עמוד תור סרט כולל מיתוג 250 ס\"מ", contract:14.15, unit:"יחידה", price:49023, type:"unit" },
+    { name:"עמוד תור חבל 150 ס\"מ", contract:14.16, unit:"יחידה", price:48679, type:"unit" },
+    { name:"שלטי פרסום רצפי עם קליפס עם לוגו A4", contract:14.17, unit:"יחידה", price:48923, type:"unit" },
+    { name:"שלטי פרסום רצפי עם קליפס עם לוגו A3", contract:14.18, unit:"יחידה", price:48311, type:"unit" },
+    { name:"קוביות עץ עם שמשונית מודפסת", contract:14.19, unit:"מ\"ר", price:48679, type:"sqm" },
+  ]},
+  { cat:"לוחות מחיקים זכוכית שקוף/חלבי", items:[
+    { name:"לוח מחיק זכוכית שקוף/חלבי 200X100", contract:15.1, unit:"יחידה", price:47779, type:"unit" },
+    { name:"לוח מחיק זכוכית שקוף/חלבי 100X150", contract:15.2, unit:"יחידה", price:48491, type:"unit" },
+    { name:"לוח מחיק זכוכית שקוף/חלבי 90X60 ס\"מ", contract:15.3, unit:"יחידה", price:48923, type:"unit" },
+    { name:"לוח מחיק זכוכית שקוף/חלבי 50X70 ס\"מ", contract:15.4, unit:"יחידה", price:48941, type:"unit" },
+  ]},
+  { cat:"מגש טושים", items:[
+    { name:"מגש טושים פרספקס", contract:16.1, unit:"יחידה", price:48831, type:"unit" },
+  ]},
+  { cat:"מתקני פרספקס", items:[
+    { name:"מעמד פרספקס שולחני A3", contract:17.1, unit:"יחידה", price:48821, type:"unit" },
+    { name:"מעמד פרספקס שולחני A4", contract:17.2, unit:"יחידה", price:48839, type:"unit" },
+    { name:"מעמד שולחני אוהל כיס משני הצדדים 8X20 ס\"מ", contract:17.3, unit:"יחידה", price:48861, type:"unit" },
+  ]},
+  { cat:"גרפיקה", items:[
+    { name:"שעת גרפיקאי", contract:18.1, unit:"שעה", price:48761, type:"unit" },
+  ]},
+  { cat:"התקנות", items:[
+    { name:"מדבקות", contract:19.1, unit:"מ\"ר", price:48861, type:"sqm" },
+    { name:"התזת חול", contract:19.2, unit:"מ\"ר", price:48809, type:"sqm" },
+    { name:"מינימום התקנה - מתקין 1", contract:19.3, unit:"יחידה", price:49073, type:"unit" },
+    { name:"מינימום התקנה - 2 מתקינים", contract:19.4, unit:"יחידה", price:48311, type:"unit" },
+    { name:"יום עבודה - מתקין מוסמך 1", contract:19.5, unit:"יום", price:47923, type:"unit" },
+    { name:"יום עבודה - מתקין מוסמך 1 + עוזר", contract:19.6, unit:"יום", price:46891, type:"unit" },
+  ]},
+  { cat:"שטיח לבד", items:[
+    { name:"שטיח לבד", contract:20.1, unit:"מ\"ר", price:48886, type:"sqm" },
+  ]},
+  { cat:"אותיות בולטות", items:[
+    { name:"אותיות בולטות פיויסי צבועות 10 מ\"מ ס\"מ גובה אות", contract:21.1, unit:"1 ס\"מ גובה אות", price:48877, type:"unit" },
+    { name:"אותיות בולטות פיויסי צבועות 20 מ\"מ ס\"מ גובה אות", contract:21.2, unit:"1 ס\"מ גובה אות", price:48875, type:"unit" },
+    { name:"אותיות בולטות פיויסי שחור/לבן 10 מ\"מ ס\"מ גובה אות", contract:21.3, unit:"1 ס\"מ גובה אות", price:48877, type:"unit" },
+    { name:"שילוט אותיות מואר 60 מ\"מ (חזית) גובה 1-20 ס\"מ", contract:21.4, unit:"יחידה", price:48923, type:"unit" },
+    { name:"שילוט אותיות מואר 60 מ\"מ (חזית) גובה 21-30 ס\"מ", contract:21.5, unit:"יחידה", price:48311, type:"unit" },
+    { name:"שילוט אותיות מואר 60 מ\"מ (חזית) גובה 31-50 ס\"מ", contract:21.6, unit:"יחידה", price:48391, type:"unit" },
+  ]},
+  { cat:"שמשוניות", items:[
+    { name:"שמשונית", contract:22.1, unit:"מ\"ר", price:48861, type:"sqm" },
+  ]},
+  { cat:"שלטים", items:[
+    { name:"שלטים לדלת לפי איפיון ספציפי שנבחר", contract:23.1, unit:"יחידה", price:48779, type:"unit" },
+  ]},
+  { cat:"קוליסת עץ", items:[
+    { name:"קוליסת עץ כולל מתיחת שמשונית ושקי חול", contract:24.1, unit:"מ\"ר", price:48679, type:"sqm" },
+  ]},
+  { cat:"הדפסה לוחיות מתכת", items:[
+    { name:"לוחיות כסופות מתכת לתשורות", contract:25.1, unit:"יחידה", price:48861, type:"unit" },
+  ]},
+  { cat:"דגלים סינים", items:[
+    { name:" דגלים סינים \"ר\" 75/176 ס\"מ  חד צדדי משתקף", contract:26.1, unit:"יחידה", price:48661, type:"unit" },
+  ]},
+  { cat:"PVC", items:[
+    { name:"PVC לבן עובי 10 מ''מ + הדפסה + חיתוך צורני", contract:27.1, unit:"מ\"ר", price:48923, type:"sqm" },
+  ]},
+  { cat:"לוגו", items:[
+    { name:"לוגו תע\"א + התקנה פרספקס 10 מ\"מ רוחב 80 ס\"מ", contract:28.1, unit:"יחידה", price:48491, type:"unit" },
+    { name:"לוגו תע\"א + התקנה פרספקס 10 מ\"מ רוחב 100 ס\"מ", contract:28.2, unit:"יחידה", price:48391, type:"unit" },
+    { name:"לוגו תע\"א + התקנה פרספקס 10 מ\"מ רוחב 120 ס\"מ", contract:28.3, unit:"יחידה", price:47779, type:"unit" },
+    { name:"לוגו תע\"א + התקנה פרספקס 15 מ\"מ רוחב 80 ס\"מ", contract:28.4, unit:"יחידה", price:47779, type:"unit" },
+    { name:"לוגו תע\"א + התקנה פרספקס 15 מ\"מ רוחב 100 ס\"מ", contract:28.5, unit:"יחידה", price:48123, type:"unit" },
+    { name:"לוגו תע\"א + התקנה פרספקס 15 מ\"מ רוחב 120 ס\"מ", contract:28.6, unit:"יחידה", price:48023, type:"unit" },
+    { name:"לוגו תע\"ש - אותיות מוארות חזית פרספקס עובי 60 מ\"מ + תאורת הילה אחורית - 80 ס\"מ רוחב", contract:28.7, unit:"יחידה", price:43079, type:"unit" },
+    { name:"לוגו תע\"ש - אותיות מוארות חזית פרספקס עובי 60 מ\"מ + תאורת הילה אחורית  - 100 ס\"מ רוחב", contract:28.8, unit:"יחידה", price:42891, type:"unit" },
+    { name:"לוגו תע\"ש - אותיות מוארות חזית פרספקס עובי 60 מ\"מ + תאורת הילה אחורית - 120 ס\"מ רוחב", contract:28.9, unit:"יחידה", price:42423, type:"unit" },
+    { name:"לוגו תע\"ש - אותיות מוארות חזית פרספקס עובי 60 מ\"מ + תאורת הילה אחורית חזיתית  - 80 ס\"מ רוחב", contract:28.1, unit:"יחידה", price:45311, type:"unit" },
+    { name:"לוגו תע\"ש - אותיות מוארות חזית פרספקס עובי 60 מ\"מ + תאורת הילה אחורית חזיתית  - 100 ס\"מ רוחב", contract:28.11, unit:"יחידה", price:45391, type:"unit" },
+    { name:"לוגו תע\"ש - אותיות מוארות חזית פרספקס עובי 60 מ\"מ + תאורת הילה אחורית חזיתית  - 120 ס\"מ רוחב", contract:28.12, unit:"יחידה", price:45023, type:"unit" },
+  ]},
+  { cat:"mגן קיר", items:[
+    { name:"מגן קיר פרספקס שקוף גובה 20 ס\"מ + פרזול", contract:29.1, unit:"מטר רץ", price:48821, type:"length" },
+  ]},
+  { cat:"כוורת טלפונים", items:[
+    { name:"כוורת טלפונים פרספקס שחור + ספייסרים + מיתוג - 15 תאים", contract:30.1, unit:"יחידה", price:48123, type:"unit" },
+    { name:"כוורת טלפונים פרספקס שחור + ספייסרים + מיתוג - 20 תאים", contract:30.2, unit:"יחידה", price:47279, type:"unit" },
+    { name:"כוורת טלפונים פרספקס שחור + ספייסרים + מיתוג - 30 תאים", contract:30.3, unit:"יחידה", price:46811, type:"unit" },
+    { name:"כוורת טלפונים פרספקס שחור + ספייסרים + מיתוג - 40 תאים", contract:30.4, unit:"יחידה", price:46891, type:"unit" },
+    { name:"כוורת טלפונים פרספקס שחור + ספייסרים + מיתוג - 50 תאים", contract:30.5, unit:"יחידה", price:45679, type:"unit" },
+    { name:"כוורת טלפונים פרספקס שחור + ספייסרים + מיתוג - 60 תאים", contract:30.6, unit:"יחידה", price:45111, type:"unit" },
   ]},
 ];
+
 // Decode prices in place so the rest of the code can use p.price normally.
 PRODUCTS.forEach(cat => cat.items.forEach(it => { it.price = _p(it.price); }));
 
@@ -1060,24 +1195,45 @@ let editingIndex = null;
 
 function fmt(n) { return Math.round(n).toLocaleString('he-IL'); }
 
+const isLetterItem = p => String(p.unit).includes('ס"מ גובה אות');
+
 function calcRow(row) {
   const p = row.product;
   const h = parseFloat(row.height) || 0;
   const w = parseFloat(row.width) || 0;
   const q = parseFloat(row.qty) || 0;
+  
+  if (isLetterItem(p)) {
+    const lQty = parseFloat(row.letterCount) || 0;
+    const lH = parseFloat(row.letterHeight) || 0;
+    const totalUnits = lQty * lH * q;
+    return { sqm: 0, unitPrice: p.price * lQty * lH, total: p.price * totalUnits, isMinSqm: false };
+  }
+
   if (p.type === 'sqm') {
-    const sqm = (h * w / 10000) * q;
-    const unitPrice = p.price * (h * w / 10000);
-    return { sqm, unitPrice, total: p.price * sqm };
+    const unitSqmRaw = (h * w / 10000);
+    const unitSqm = Math.max(0.5, unitSqmRaw);
+    const isMinSqm = unitSqmRaw > 0 && unitSqmRaw < 0.5;
+    const sqm = unitSqm * q;
+    let basePrice = p.price;
+    if (p.contract === 7.5) {
+      const thick = parseFloat(row.thickness) || 1;
+      basePrice *= thick;
+    }
+    const unitPrice = basePrice * unitSqm;
+    return { sqm, unitPrice, total: basePrice * sqm, isMinSqm };
   }
+  
   if (p.type === 'length') {
-    // Fixed 20 ס"מ height; `width` stores the running length in ס"מ.
-    // Price is per running meter, total = price × (length/100) × qty.
-    const lengthM = w / 100;
+    // Perimeter formula: (2*W + 2*H) / 100 * Price
+    // Contract 29.1 (מגן קיר) has fixed 20cm height.
+    const actualH = p.contract === 29.1 ? 20 : h;
+    const lengthM = (2 * actualH + 2 * w) / 100;
     const unitPrice = p.price * lengthM;
-    return { sqm: (20 * w / 10000) * q, unitPrice, total: unitPrice * q };
+    return { sqm: (actualH * w / 10000) * q, unitPrice, total: unitPrice * q, isMinSqm: false };
   }
-  return { sqm: 0, unitPrice: p.price, total: p.price * q };
+  
+  return { sqm: 0, unitPrice: p.price, total: p.price * q, isMinSqm: false };
 }
 
 function renderTable() {
@@ -1095,11 +1251,9 @@ function renderTable() {
     const sqmCell = c.sqm > 0 ? c.sqm.toFixed(2) : (row.product.type==='fixed'?'0':'');
     // Inline-editable cells for height/width/qty/notes. Height is read-only
     // for length-type (fixed 20 ס"מ). Non-sized products hide the size cells.
-    const heightCell = isSqm
+    const heightCell = isSqm || (isLength && row.product.contract !== 29.1)
       ? `<input class="cell-input" type="number" min="0" step="1" value="${escAttr(row.height||'')}" oninput="inlineEdit(${i},'height',this.value)">`
-      : isLength
-        ? `<span class="cell-fixed">20</span>`
-        : '';
+      : isLength ? `<span class="cell-fixed">20</span>` : '';
     const widthCell = hasSize
       ? `<input class="cell-input" type="number" min="0" step="1" value="${escAttr(row.width||'')}" oninput="inlineEdit(${i},'width',this.value)">`
       : '';
@@ -1111,7 +1265,15 @@ function renderTable() {
         <button class="del-btn" title="מחק" onclick="deleteRow(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div></td>
       <td class="row-num" data-label="#">${i+1}</td>
-      <td class="item-name"><span class="item-name-title">${row.product.name}</span>${row.notes ? `<span class="item-name-notes">${escAttr(row.notes)}</span>` : ''}</td>
+      <td class="item-name"><span class="item-name-title">${row.product.name}${(() => {
+        const isSqm = row.product.type === 'sqm';
+        const isLength = row.product.type === 'length';
+        if ((isSqm || isLength) && row.width) {
+          const hDisp = isLength && row.product.contract === 29.1 ? '20' : row.height;
+          if (hDisp) return ` <span class="size-standard">${row.width}/${hDisp} ס"מ</span>`;
+        }
+        return '';
+      })()}</span>${row.notes ? `<span class="item-name-notes">${escAttr(row.notes)}</span>` : ''}</td>
       <td class="num-cell" data-label="סעיף"><span class="contract-badge">${row.product.contract}</span></td>
       <td data-label="יחידה">${row.product.unit}</td>
       <td class="num-cell money" data-label="מחיר יח׳">${fmt(row.product.price)}</td>
@@ -1334,7 +1496,16 @@ function editRow(idx) {
   if (!row) return;
   editingIndex = idx;
   pendingProduct = row.product;
-  openDetailModal({ qty: row.qty, height: row.height, width: row.width, notes: row.notes });
+  openDetailModal({
+    qty: row.qty,
+    height: row.height,
+    width: row.width,
+    thickness: row.thickness,
+    letterCount: row.letterCount,
+    letterHeight: row.letterHeight,
+    letterText: row.letterText,
+    notes: row.notes
+  });
 }
 function clearAll() {
   if (quoteRows.length && !confirm('לנקות את כל השורות?')) return;
@@ -1406,12 +1577,9 @@ function renderProductList(filter) {
     items.forEach(p => {
       const idx=cat.items.indexOf(p);
       html+=`<li class="product-item" onclick="selectProduct('${cat.cat}',${idx})">
+        <span class="p-contract" title="מספר סעיף">${p.contract}</span>
         <span class="p-name">${p.name}</span>
-        <span class="p-meta">
-          <span class="p-contract">${p.contract}</span>
-          <span>${p.unit}</span>
-          <span class="p-price">₪${fmt(p.price)}</span>
-        </span>
+        <span class="p-meta"><span>${p.unit}</span><span class="p-price">₪${fmt(p.price)}</span></span>
       </li>`;
     });
   });
@@ -1433,36 +1601,89 @@ function openDetailModal(initial) {
   const init=initial||{};
   const isEditing = editingIndex != null;
   document.getElementById('detailTitle').textContent = (isEditing ? 'ערוך — ' : '') + p.name;
-  const isSqm=p.type==='sqm';
-  const isLength=p.type==='length';
-  const qtyVal = init.qty != null && init.qty !== '' ? init.qty : 1;
-  const heightVal = init.height != null ? init.height : (isLength ? '20' : '');
+  
+  const isSqm = p.type==='sqm';
+  const isLength = p.type==='length';
+  const isFixed20 = isLength && p.contract === 29.1;
+  const isThicknessItem = p.contract === 7.5;
+  const isLetter = isLetterItem(p);
+  
+  // Business rules defaults
+  let minQty = 1, stepQty = 1;
+  if (p.contract === 6.1) minQty = 500;
+  if (p.contract === 6.4) stepQty = 15;
+  if (p.contract === 6.5) stepQty = 30;
+
+  const qtyVal = init.qty != null && init.qty !== '' ? init.qty : (minQty > 1 ? minQty : 1);
+  const heightVal = init.height != null ? init.height : (isFixed20 ? '20' : '');
   const widthVal = init.width != null ? init.width : '';
   const notesVal = init.notes != null ? init.notes : '';
-  document.getElementById('detailForm').innerHTML=`
+  const thicknessVal = init.thickness != null ? init.thickness : (isThicknessItem ? 1 : '');
+  
+  // Letter fields
+  const lCountVal = init.letterCount != null ? init.letterCount : '';
+  const lHeightVal = init.letterHeight != null ? init.letterHeight : '';
+  const lTextVal = init.letterText != null ? init.letterText : '';
+
+  let fieldsHtml = `
     <div class="detail-group"><label>סעיף בחוזה</label><input class="readonly" value="${escAttr(p.contract)}" readonly></div>
     <div class="detail-group"><label>יחידת מידה</label><input class="readonly" value="${escAttr(p.unit)}" readonly></div>
     <div class="detail-group"><label>מחיר ל${isLength?'מטר רץ':(p.unit||'יחידה')}</label><input class="readonly" value="₪${fmt(p.price)}" readonly></div>
-    <div class="detail-group"><label>כמות</label><input type="number" id="dQty" min="0" step="1" value="${escAttr(qtyVal)}" oninput="updateDetailPreview()"></div>
-    ${isSqm?`
-    <div class="detail-group"><label>גובה (ס"מ)</label><input type="number" id="dHeight" min="0" step="1" placeholder="גובה" value="${escAttr(heightVal)}" oninput="updateDetailPreview()"></div>
-    <div class="detail-group"><label>רוחב (ס"מ)</label><input type="number" id="dWidth" min="0" step="1" placeholder="רוחב" value="${escAttr(widthVal)}" oninput="updateDetailPreview()"></div>
-    `:isLength?`
-    <div class="detail-group"><label>גובה (ס"מ)</label><input class="readonly" value="20" readonly><input type="hidden" id="dHeight" value="20"></div>
-    <div class="detail-group"><label>אורך (ס"מ)</label><input type="number" id="dWidth" min="0" step="1" placeholder="אורך בס&quot;מ" value="${escAttr(widthVal)}" oninput="updateDetailPreview()"></div>
-    `:`<input type="hidden" id="dHeight" value="0"><input type="hidden" id="dWidth" value="0">`}
-    <div class="detail-group full"><label>הערות</label><input type="text" id="dNotes" placeholder="הערות (לא חובה)" value="${escAttr(notesVal)}"></div>
-    <div class="detail-preview" id="detailPreview">
-      <span class="dp-label">${isSqm?'מ"ר: 0 | ':isLength?'אורך: 0 מ׳ | ':''}סה"כ:</span>
-      <span class="dp-value">₪0</span>
+    <div class="detail-group"><label>כמות${minQty>1?` (מינימום ${minQty})`:''}</label>
+      <input type="number" id="dQty" min="${minQty}" step="${stepQty}" value="${escAttr(qtyVal)}" oninput="updateDetailPreview()">
     </div>
   `;
+
+  if (isLetter) {
+    fieldsHtml += `
+      <div class="detail-group full"><label>טקסט רצוי / תיאור אלמנט (לוגו וכו')</label>
+        <input type="text" id="dLetterText" placeholder="הקלד טקסט או שם אלמנט..." value="${escAttr(lTextVal)}" oninput="onLetterTextInput()">
+      </div>
+      <div class="detail-group"><label>כמות אותיות/אלמנטים</label>
+        <input type="number" id="dLetterCount" min="0" placeholder="מס' אותיות" value="${escAttr(lCountVal)}" oninput="updateDetailPreview()">
+      </div>
+      <div class="detail-group"><label>גובה אות/אלמנט (ס"מ)</label>
+        <input type="number" id="dLetterHeight" min="0" placeholder="גובה בס&quot;מ" value="${escAttr(lHeightVal)}" oninput="updateDetailPreview()">
+      </div>
+    `;
+  } else if (isSqm || (isLength && !isFixed20)) {
+    fieldsHtml += `
+      <div class="detail-group"><label>גובה (ס"מ)</label><input type="number" id="dHeight" min="0" step="1" placeholder="גובה" value="${escAttr(heightVal)}" oninput="updateDetailPreview()"></div>
+      <div class="detail-group"><label>רוחב (ס"מ)</label><input type="number" id="dWidth" min="0" step="1" placeholder="רוחב" value="${escAttr(widthVal)}" oninput="updateDetailPreview()"></div>
+    `;
+  } else if (isFixed20) {
+    fieldsHtml += `
+      <div class="detail-group"><label>גובה (ס"מ)</label><input class="readonly" value="20" readonly><input type="hidden" id="dHeight" value="20"></div>
+      <div class="detail-group"><label>אורך (ס"מ)</label><input type="number" id="dWidth" min="0" step="1" placeholder="אורך בס&quot;מ" value="${escAttr(widthVal)}" oninput="updateDetailPreview()"></div>
+    `;
+  } else {
+    fieldsHtml += `<input type="hidden" id="dHeight" value="0"><input type="hidden" id="dWidth" value="0">`;
+  }
+
+  if (isThicknessItem) {
+    fieldsHtml += `<div class="detail-group"><label>עובי (מ"מ)</label><input type="number" id="dThickness" min="1" step="1" value="${escAttr(thicknessVal)}" oninput="updateDetailPreview()"></div>`;
+  }
+
+  fieldsHtml += `
+    <div class="detail-group full"><label>הערות</label><input type="text" id="dNotes" placeholder="הערות (לא חובה)" value="${escAttr(notesVal)}"></div>
+    <div class="detail-preview" id="detailPreview"></div>
+  `;
+
+  document.getElementById('detailForm').innerHTML = fieldsHtml;
   document.getElementById('detailModal').style.display='flex';
   updateDetailPreview();
   setTimeout(()=>{
-    const first = (isSqm?document.getElementById('dHeight'):isLength?document.getElementById('dWidth'):document.getElementById('dQty'));
+    const first = (isLetter?document.getElementById('dLetterText'):isSqm?document.getElementById('dHeight'):isLength?document.getElementById('dWidth'):document.getElementById('dQty'));
     first?.focus();
   },100);
+}
+
+function onLetterTextInput() {
+  const text = document.getElementById('dLetterText').value || '';
+  // Simple heuristic: count non-whitespace characters as letters
+  const count = text.replace(/\s/g, '').length;
+  if (count > 0) document.getElementById('dLetterCount').value = count;
+  updateDetailPreview();
 }
 
 function updateDetailPreview() {
@@ -1470,27 +1691,65 @@ function updateDetailPreview() {
   const h=parseFloat(document.getElementById('dHeight')?.value)||0;
   const w=parseFloat(document.getElementById('dWidth')?.value)||0;
   const q=parseFloat(document.getElementById('dQty')?.value)||0;
+  const thick=parseFloat(document.getElementById('dThickness')?.value)||1;
+  const lQty = parseFloat(document.getElementById('dLetterCount')?.value)||0;
+  const lH = parseFloat(document.getElementById('dLetterHeight')?.value)||0;
+  
   const isSqm=p.type==='sqm';
   const isLength=p.type==='length';
-  let sqm=0,total=0,lengthM=0;
-  if(isSqm){sqm=(h*w/10000)*q;total=p.price*sqm}
-  else if(isLength){lengthM=w/100;total=p.price*lengthM*q}
-  else{total=p.price*q}
+  const isLetter=isLetterItem(p);
+  
+  const rowObj = { product:p, height:h, width:w, qty:q, thickness:thick, letterCount:lQty, letterHeight:lH };
+  const c = calcRow(rowObj);
+
+  let labelHtml = '';
+  if (isLetter) {
+    labelHtml = `<span class="dp-label">יח׳ חישוב: ${(lQty * lH * q).toFixed(1)} | סה"כ:</span>`;
+  } else if (isSqm) {
+    labelHtml = `<span class="dp-label">מ"ר: ${c.sqm.toFixed(2)}${c.isMinSqm ? ' <strong style="color:var(--red)">(מינימום 0.5 ליח׳)</strong>' : ''} | סה"כ:</span>`;
+  } else if (isLength) {
+    labelHtml = `<span class="dp-label">היקף: ${((2*h + 2*w)/100).toFixed(2)} מ׳ | סה"כ:</span>`;
+  } else {
+    labelHtml = `<span class="dp-label">סה"כ:</span>`;
+  }
+
   const prev=document.getElementById('detailPreview');
-  if(prev)prev.innerHTML=`
-    <span class="dp-label">${isSqm?'מ"ר: '+sqm.toFixed(2)+' | ':isLength?'אורך: '+lengthM.toFixed(2)+' מ׳ | ':''}סה"כ:</span>
-    <span class="dp-value">₪${fmt(total)}</span>`;
+  if(prev) {
+    prev.innerHTML=`${labelHtml} <span class="dp-value">₪${fmt(c.total)}</span>`;
+    prev.style.background = c.isMinSqm ? '#fff3cd' : 'var(--green-bg)';
+  }
 }
 
 function closeDetailModal(){document.getElementById('detailModal').style.display='none';pendingProduct=null;editingIndex=null}
 
 function confirmAddProduct() {
+  const p = pendingProduct;
+  const qtyInput = document.getElementById('dQty');
+  const qty = qtyInput?.value || '1';
+  const min = parseInt(qtyInput?.min || '1');
+  
+  if (parseInt(qty) < min) {
+    alert(`כמות מינימלית לפריט זה היא ${min}`); return;
+  }
+  
+  // Pack size validation
+  if (p.contract === 6.4 && (parseInt(qty) % 15 !== 0)) {
+    alert('פריט זה נמכר בחבילות של 15 יחידות בלבד'); return;
+  }
+  if (p.contract === 6.5 && (parseInt(qty) % 30 !== 0)) {
+    alert('פריט זה נמכר בחבילות של 30 יחידות בלבד'); return;
+  }
+
   const row = {
-    product:pendingProduct,
-    height:document.getElementById('dHeight')?.value||'',
-    width:document.getElementById('dWidth')?.value||'',
-    qty:document.getElementById('dQty')?.value||'1',
-    notes:document.getElementById('dNotes')?.value||'',
+    product: p,
+    height: document.getElementById('dHeight')?.value || '',
+    width: document.getElementById('dWidth')?.value || '',
+    qty: qty,
+    thickness: document.getElementById('dThickness')?.value || '',
+    letterCount: document.getElementById('dLetterCount')?.value || '',
+    letterHeight: document.getElementById('dLetterHeight')?.value || '',
+    letterText: document.getElementById('dLetterText')?.value || '',
+    notes: document.getElementById('dNotes')?.value || '',
   };
   if (editingIndex != null) {
     quoteRows[editingIndex] = row;
